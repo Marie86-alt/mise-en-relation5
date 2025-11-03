@@ -19,6 +19,7 @@
     "@stripe/stripe-react-native": "0.50.3",
     "expo": "~54.0.20",
     "expo-blur": "~14.1.5",
+    "expo-clipboard": "~8.0.7",
     "expo-constants": "~17.1.7",
     "expo-dev-client": "~5.2.4",
     "expo-font": "~13.3.2",
