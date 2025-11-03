@@ -1,67 +1,26 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 import uuid
 from datetime import datetime
+from contextlib import asynccontextmanager
 
+# Firebase Admin SDK
+try:
+    import firebase_admin
+    from firebase_admin import credentials, firestore
+    FIREBASE_AVAILABLE = True
+except ImportError:
+    FIREBASE_AVAILABLE = False
+    print("⚠️ firebase-admin non installé. Installez avec: pip install firebase-admin")
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
-
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
-# Create the main app without a prefix
-app = FastAPI()
-
-# Create a router with the /api prefix
-api_router = APIRouter(prefix="/api")
-
-
-# Define Models
-class StatusCheck(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
-
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
-
-# Include the router in the main app
-app.include_router(api_router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Configure logging
 logging.basicConfig(
@@ -70,6 +29,195 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
+# Firebase initialization
+db = None
+
+if FIREBASE_AVAILABLE:
+    try:
+        # Initialiser Firebase Admin
+        firebase_project_id = os.environ.get('FIREBASE_PROJECT_ID')
+        
+        if not firebase_project_id:
+            raise ValueError("FIREBASE_PROJECT_ID n'est pas défini")
+        
+        # Vérifier si service-account.json existe
+        service_account_path = ROOT_DIR / 'service-account.json'
+        
+        if service_account_path.exists():
+            # Utiliser le fichier service account
+            cred = credentials.Certificate(str(service_account_path))
+            firebase_admin.initialize_app(cred)
+            logger.info("✅ Firebase initialisé avec service-account.json")
+        else:
+            # Utiliser les credentials par défaut
+            firebase_admin.initialize_app()
+            logger.info("✅ Firebase initialisé avec credentials par défaut")
+        
+        db = firestore.client()
+        logger.info(f"✅ Firestore connecté au projet: {firebase_project_id}")
+        
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de l'initialisation de Firebase: {e}")
+        logger.warning("⚠️ L'application démarrera sans base de données")
+else:
+    logger.warning("⚠️ Firebase Admin SDK non disponible")
+
+# Lifespan context manager
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    logger.info("🚀 Démarrage de l'application")
+    yield
+    # Shutdown
+    logger.info("🛑 Arrêt de l'application")
+    if FIREBASE_AVAILABLE:
+        try:
+            firebase_admin.delete_app(firebase_admin.get_app())
+            logger.info("✅ Firebase Admin fermé proprement")
+        except:
+            pass
+
+# Create the main app with lifespan
+app = FastAPI(
+    title="API Mise en Relation - A La Case Nout Gramoun",
+    description="API pour l'application de mise en relation",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# Create a router with the /api prefix
+api_router = APIRouter(prefix="/api")
+
+# Define Models
+class StatusCheck(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    client_name: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+
+class StatusCheckCreate(BaseModel):
+    client_name: str
+
+# Routes
+@api_router.get("/")
+async def root():
+    return {
+        "message": "API Mise en Relation - A La Case Nout Gramoun",
+        "version": "1.0.0",
+        "status": "running",
+        "database": "Firebase Firestore" if db else "Non connectée"
+    }
+
+@api_router.post("/status", response_model=StatusCheck)
+async def create_status_check(input: StatusCheckCreate):
+    if not db:
+        raise HTTPException(
+            status_code=503,
+            detail="Base de données non disponible"
+        )
+    
+    try:
+        # Créer l'objet status
+        status_obj = StatusCheck(**input.model_dump())
+        status_dict = status_obj.model_dump()
+        
+        # Convertir datetime en string pour Firestore
+        if isinstance(status_dict.get('timestamp'), datetime):
+            status_dict['timestamp'] = status_dict['timestamp'].isoformat()
+        
+        # Enregistrer dans Firestore
+        doc_ref = db.collection('status_checks').document(status_obj.id)
+        doc_ref.set(status_dict)
+        
+        logger.info(f"✅ Status check créé: {status_obj.id}")
+        return status_obj
+        
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de la création du status check: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors de la création: {str(e)}"
+        )
+
+@api_router.get("/status", response_model=List[StatusCheck])
+async def get_status_checks():
+    if not db:
+        raise HTTPException(
+            status_code=503,
+            detail="Base de données non disponible"
+        )
+    
+    try:
+        # Récupérer tous les status checks depuis Firestore
+        docs = db.collection('status_checks').limit(1000).stream()
+        
+        status_checks = []
+        for doc in docs:
+            data = doc.to_dict()
+            # Convertir la string timestamp en datetime si nécessaire
+            if isinstance(data.get('timestamp'), str):
+                data['timestamp'] = datetime.fromisoformat(data['timestamp'])
+            status_checks.append(StatusCheck(**data))
+        
+        logger.info(f"✅ {len(status_checks)} status checks récupérés")
+        return status_checks
+        
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de la récupération: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors de la récupération: {str(e)}"
+        )
+
+@api_router.get("/health")
+async def health_check():
+    """Endpoint de santé pour vérifier l'état de l'API et de la base de données"""
+    health_status = {
+        "status": "healthy",
+        "database": "disconnected",
+        "firebase_sdk": FIREBASE_AVAILABLE,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    
+    if db:
+        try:
+            # Tester la connexion Firestore
+            test_ref = db.collection('_health_check').document('test')
+            test_ref.set({'timestamp': datetime.utcnow().isoformat()})
+            health_status["database"] = "connected"
+            logger.info("✅ Health check: Base de données OK")
+        except Exception as e:
+            health_status["database"] = f"error: {str(e)}"
+            health_status["status"] = "unhealthy"
+            logger.error(f"❌ Health check: Erreur base de données - {e}")
+    
+    return health_status
+
+# Include the router in the main app
+app.include_router(api_router)
+
+# CORS configuré
+allowed_origins = os.environ.get('ALLOWED_ORIGINS', '').split(',')
+if not allowed_origins or allowed_origins == ['']:
+    # En développement, autoriser localhost
+    allowed_origins = [
+        "http://localhost:3000",
+        "http://localhost:8081",
+        "http://localhost:19006"
+    ]
+    logger.warning("⚠️ CORS configuré avec des origines par défaut (développement)")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+logger.info("✅ Serveur FastAPI initialisé avec succès")
+logger.info(f"📊 CORS origins: {allowed_origins}")
