@@ -57,3 +57,7 @@ build/
 .env.local
 .env.*.local
 *.orig
+-e 
+# Environment files
+*.env
+*.env.*
