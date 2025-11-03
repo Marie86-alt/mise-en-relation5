@@ -7,14 +7,32 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-       "android": { "buildType": "apk" }
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
+      }
     },
     "preview": {
       "distribution": "internal",
-       "android": { "buildType": "apk" }
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease",
+        "env": {
+          "EXPO_NO_CAPABILITY_SYNC": "1"
+        }
+      },
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "https://buffy-previsible-cooingly.ngrok-free.dev"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "android": {
+        "buildType": "aab"
+      },
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "https://buffy-previsible-cooingly.ngrok-free.dev"
+      }
     }
   },
   "submit": {
