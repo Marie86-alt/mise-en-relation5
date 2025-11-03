@@ -16,10 +16,7 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk",
-        "gradleCommand": ":app:assembleRelease",
-        "env": {
-          "EXPO_NO_CAPABILITY_SYNC": "1"
-        }
+        "gradleCommand": ":app:assembleRelease"
       },
       "env": {
         "EXPO_PUBLIC_BACKEND_URL": "https://buffy-previsible-cooingly.ngrok-free.dev"
@@ -28,7 +25,7 @@
     "production": {
       "autoIncrement": true,
       "android": {
-        "buildType": "aab"
+        "buildType": "app-bundle"
       },
       "env": {
         "EXPO_PUBLIC_BACKEND_URL": "https://buffy-previsible-cooingly.ngrok-free.dev"
