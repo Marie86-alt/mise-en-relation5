@@ -19,7 +19,13 @@
         "gradleCommand": ":app:assembleRelease"
       },
       "env": {
-       "EXPO_PUBLIC_BACKEND_URL": "https://mise-en-relation5-production-7e5b.up.railway.app"
+        "EXPO_PUBLIC_BACKEND_URL": "https://mise-en-relation5-production-7e5b.up.railway.app",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "mise-en-relation-app-prod",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyC7eiIuPV7kmFBovT3Rh8FoRV0hxldeXmQ",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "mise-en-relation-app-prod.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "mise-en-relation-app-prod.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "373619509089",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:373619509089:web:8e2e4e9e7c7f8e9e9e9e9e"
 
       }
     },
@@ -29,7 +35,14 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://mise-en-relation5-production.up.railway.app"
+        "EXPO_PUBLIC_BACKEND_URL": "https://mise-en-relation5-production-7e5b.up.railway.app",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "mise-en-relation-app-prod",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyC7eiIuPV7kmFBovT3Rh8FoRV0hxldeXmQ",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "mise-en-relation-app-prod.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "mise-en-relation-app-prod.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "373619509089",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:373619509089:web:8e2e4e9e7c7f8e9e9e9e9e"
+
       }
     }
   },
