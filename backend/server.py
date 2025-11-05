@@ -197,6 +197,10 @@ async def health_check():
     
     return health_status
 
+@app.get("/")
+def read_root():
+    return {"message": "API mise-en-relation5 en ligne ✅"}
+
 # Include the router in the main app
 app.include_router(api_router)
 

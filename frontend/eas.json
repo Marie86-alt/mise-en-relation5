@@ -19,7 +19,8 @@
         "gradleCommand": ":app:assembleRelease"
       },
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://buffy-previsible-cooingly.ngrok-free.dev"
+       "EXPO_PUBLIC_BACKEND_URL": "https://mise-en-relation5-production-7e5b.up.railway.app"
+
       }
     },
     "production": {
@@ -28,7 +29,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://buffy-previsible-cooingly.ngrok-free.dev"
+        "EXPO_PUBLIC_BACKEND_URL": "https://mise-en-relation5-production.up.railway.app"
       }
     }
   },
