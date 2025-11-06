@@ -195,10 +195,11 @@ async def health_check():
 
 
 # --- NOUVEAU : route Stripe ---
-@api_router.post("/payments/create-intent")
+# --- NOUVEAU : route Stripe ---
+@api_router.post("/create-payment-intent")  # ✅ Chemin corrigé !
 async def create_payment_intent(body: PaymentIntentCreate):
     """
-    Crée un PaymentIntent Stripe et renvoie le clientSecret
+    Crée un PaymentIntent Stripe et renvoie le client_secret
     body.amount doit être en centimes (ex: 8,80€ -> 880)
     """
     if not stripe.api_key:
@@ -210,12 +211,16 @@ async def create_payment_intent(body: PaymentIntentCreate):
             currency=body.currency,
             automatic_payment_methods={"enabled": True},
         )
-        return {"clientSecret": intent["client_secret"]}
+        
+        # ✅ Renvoyer les deux formats pour compatibilité
+        return {
+            "client_secret": intent["client_secret"],  # Snake case (standard backend)
+            "clientSecret": intent["client_secret"],   # Camel case (frontend)
+            "id": intent["id"]                          # ID du PaymentIntent
+        }
     except Exception as e:
         logger.error(f"❌ Erreur Stripe: {e}")
         raise HTTPException(status_code=400, detail=str(e))
-
-
 # ------------------
 #   ROUTE /
 # ------------------
