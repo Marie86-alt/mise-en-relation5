@@ -1,20 +1,19 @@
-// src/services/stripe/paymentService.ts
+// src/stripe/paymentService.ts
 import { Platform } from 'react-native';
 import * as Linking from 'expo-linking';
 import { PricingResult } from '../utils/pricing';
 import { HttpPaymentService } from './httpPaymentService';
 
-// Import conditionnel de Stripe (uniquement sur mobile)
 let initPaymentSheet: any;
 let presentPaymentSheet: any;
 
 if (Platform.OS !== 'web') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const stripe = require('@stripe/stripe-react-native');
   initPaymentSheet = stripe.initPaymentSheet;
   presentPaymentSheet = stripe.presentPaymentSheet;
 }
 
-// --- Types alignés avec tes écrans ---
 export interface PaymentData {
   conversationId: string;
   aidantId: string;
@@ -29,11 +28,15 @@ export interface PaymentData {
   };
 }
 
-type InitResult = { success: true; paymentIntentId?: string } | { success: false; error: string; errorCode?: string };
+type InitResult =
+  | { success: true; paymentIntentId?: string }
+  | { success: false; error: string; errorCode?: string };
+
 type SimpleResult = { success: true } | { success: false; error: string };
 
 const RETURN_URL = Linking.createURL('payment-return');
 const r2 = (n: number) => Math.round(n * 100) / 100;
+const toCents = (amount: number) => Math.round(amount * 100);
 
 // ---------- ACOMPTE (20%) ----------
 async function initializeDepositPayment(data: PaymentData): Promise<InitResult> {
@@ -41,48 +44,44 @@ async function initializeDepositPayment(data: PaymentData): Promise<InitResult> 
     const total = Number(data.pricingData?.finalPrice || 0);
     if (!total || total <= 0) throw new Error('Montant invalide');
 
-    // Calculer l'acompte (20% du total)
-    const depositAmount = r2(total * 0.2);
+    const depositAmountEur = r2(total * 0.2);
+    const depositAmountCents = toCents(depositAmountEur);
 
-    console.log('💳 Création acompte:', { total, depositAmount });
-
-    // Appel HTTP vers votre serveur Express
     const dep = await HttpPaymentService.createPaymentIntent(
-      depositAmount,
+      depositAmountCents,
       'eur',
       {
         type: 'deposit',
         conversationId: data.conversationId,
         serviceDetails: data.serviceDetails ?? null,
         totalAmount: total,
-        depositAmount,
+        depositAmount: depositAmountEur,
       }
     );
 
-    if (!dep?.client_secret || !dep?.id) {
+    // ✅ accepter les deux formats: client_secret (backend) OU clientSecret (autres)
+    const clientSecret = dep.client_secret ?? (dep as any).clientSecret;
+    if (!clientSecret) {
       return { success: false, error: 'Réponse serveur incomplète (acompte)' };
     }
 
-    console.log('🔄 Initialisation du Payment Sheet...');
-    console.log('🔑 Client Secret:', dep.client_secret?.substring(0, 20) + '...');
-    
     const { error } = await initPaymentSheet({
-      paymentIntentClientSecret: dep.client_secret,
+      paymentIntentClientSecret: clientSecret,
       merchantDisplayName: 'Mise en Relation',
       allowsDelayedPaymentMethods: false,
       returnURL: RETURN_URL,
     });
-    
+
     if (error) {
-      console.log('❌ Erreur initPaymentSheet:', error);
       return { success: false, error: error.message, errorCode: error.code };
     }
-    
-    console.log('✅ Payment Sheet initialisé avec succès');
 
-    return { success: true, paymentIntentId: String(dep.id) };
+    return { success: true, paymentIntentId: String(dep.id ?? '') };
   } catch (e: any) {
-    return { success: false, error: e?.message ?? "Erreur d'initialisation de l'acompte" };
+    return {
+      success: false,
+      error: e?.message ?? "Erreur d'initialisation de l'acompte",
+    };
   }
 }
 
@@ -92,75 +91,66 @@ async function initializeFinalPayment(data: PaymentData): Promise<InitResult> {
     const total = Number(data.pricingData?.finalPrice || 0);
     if (!total || total <= 0) throw new Error('Montant invalide');
 
-    // Calculer le paiement final (80% du total)
-    const finalAmount = r2(total * 0.8);
+    const finalAmountEur = r2(total * 0.8);
+    const finalAmountCents = toCents(finalAmountEur);
 
-    console.log('💳 Création paiement final:', { total, finalAmount });
-
-    // Cas limite: rien à payer
-    if (finalAmount <= 0) {
-      return { success: true, paymentIntentId: undefined };
-    }
-
-    // Appel HTTP vers votre serveur Express
     const fin = await HttpPaymentService.createPaymentIntent(
-      finalAmount,
+      finalAmountCents,
       'eur',
       {
         type: 'final',
         conversationId: data.conversationId,
         totalAmount: total,
-        finalAmount,
+        finalAmount: finalAmountEur,
       }
     );
 
-    if (!fin?.client_secret || !fin?.id) {
+    const clientSecret = fin.client_secret ?? (fin as any).clientSecret;
+    if (!clientSecret) {
       return { success: false, error: 'Réponse serveur incomplète (final)' };
     }
 
     const { error } = await initPaymentSheet({
-      paymentIntentClientSecret: fin.client_secret,
+      paymentIntentClientSecret: clientSecret,
       merchantDisplayName: 'Mise en Relation',
       allowsDelayedPaymentMethods: false,
       returnURL: RETURN_URL,
     });
-    if (error) return { success: false, error: error.message, errorCode: error.code };
 
-    return { success: true, paymentIntentId: String(fin.id) };
+    if (error) {
+      return { success: false, error: error.message, errorCode: error.code };
+    }
+
+    return { success: true, paymentIntentId: String(fin.id ?? '') };
   } catch (e: any) {
-    return { success: false, error: e?.message ?? "Erreur d'initialisation du paiement final" };
+    return {
+      success: false,
+      error: e?.message ?? "Erreur d'initialisation du paiement final",
+    };
   }
 }
 
 // ---------- PRÉSENTATION DU PAIEMENT ----------
 async function presentPayment(): Promise<SimpleResult> {
   try {
-    console.log('🎬 Appel de presentPaymentSheet() de Stripe...');
     const { error } = await presentPaymentSheet();
-    
+
     if (error) {
-      console.log('❌ Erreur Stripe presentPaymentSheet:', { 
-        code: error.code, 
-        message: error.message,
-        type: error.type 
-      });
-      
       if (error.code === 'Canceled') {
-        console.log('ℹ️ Paiement annulé par l\'utilisateur');
         return { success: false, error: 'Paiement annulé' };
       }
       return { success: false, error: error.message };
     }
-    
-    console.log('✅ presentPaymentSheet réussi !');
+
     return { success: true };
   } catch (e: any) {
-    console.log('❌ Exception dans presentPayment:', e);
-    return { success: false, error: e?.message ?? 'Erreur de présentation du paiement' };
+    return {
+      success: false,
+      error: e?.message ?? 'Erreur de présentation du paiement',
+    };
   }
 }
 
-// ---------- EXPORTS PUBLICS ----------
 export const PaymentService = {
   initializeDepositPayment,
   initializeFinalPayment,
