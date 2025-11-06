@@ -67,7 +67,7 @@ export class HttpPaymentService {
     return await this.makeRequest<HttpPaymentResponse>(
       STRIPE_ENDPOINTS.CREATE_PAYMENT_INTENT,
       {
-        amount: Math.round(amount * 100), // Convertir en centimes
+        amount, // Convertir en centimes
         currency,
         metadata: stripeMetadata,
       }
