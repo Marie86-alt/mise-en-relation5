@@ -6,6 +6,12 @@ frontend/.env
 *.key
 *.p12
 
+# Environment files
+*.env
+*.env.*
+.env.local
+.env.*.local
+
 # Node
 node_modules/
 npm-debug.log*
@@ -54,42 +60,4 @@ build/
 *.aab
 
 # Divers
-.env.local
-.env.*.local
 *.orig
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
