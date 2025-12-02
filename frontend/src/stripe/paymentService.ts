@@ -6,12 +6,14 @@ import { HttpPaymentService } from './httpPaymentService';
 
 let initPaymentSheet: any;
 let presentPaymentSheet: any;
+let confirmPaymentIntent: any;
 
 if (Platform.OS !== 'web') {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const stripe = require('@stripe/stripe-react-native');
   initPaymentSheet = stripe.initPaymentSheet;
   presentPaymentSheet = stripe.presentPaymentSheet;
+  confirmPaymentIntent = stripe.confirmPayment;
 }
 
 export interface PaymentData {
@@ -151,8 +153,27 @@ async function presentPayment(): Promise<SimpleResult> {
   }
 }
 
+async function confirmPayment(paymentIntentId: string): Promise<SimpleResult> {
+  try {
+    if (Platform.OS !== 'web' && confirmPaymentIntent) {
+      const { error } = await confirmPaymentIntent(paymentIntentId);
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    } else {
+      await HttpPaymentService.confirmPayment(paymentIntentId);
+    }
+
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e?.message ?? 'Erreur de confirmation du paiement' };
+  }
+}
+
 export const PaymentService = {
   initializeDepositPayment,
   initializeFinalPayment,
   presentPayment,
+  presentPaymentSheet: presentPayment,
+  confirmPayment,
 };
