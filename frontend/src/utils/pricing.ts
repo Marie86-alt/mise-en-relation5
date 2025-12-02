@@ -6,6 +6,7 @@ export interface PricingResult {
   discount: number;
   discountPercentage: number;
   hourlyRate: number;
+  error?: string;
 }
 
 export class PricingService {
@@ -68,15 +69,25 @@ export class PricingService {
   /**
    * Calcule le prix total selon la durée
    */
-  static calculatePrice(hours: number): PricingResult | { error: string } {
+  static calculatePrice(hours: number): PricingResult {
+    const invalidResult = (error: string): PricingResult => ({
+      hours: 0,
+      basePrice: 0,
+      finalPrice: 0,
+      discount: 0,
+      discountPercentage: 0,
+      hourlyRate: this.HOURLY_RATE,
+      error,
+    });
+
     // 🛡️ Validation de l'entrée
     if (typeof hours !== 'number' || isNaN(hours) || hours <= 0) {
-      return { error: `Durée invalide: ${hours}. Doit être un nombre positif.` };
+      return invalidResult(`Durée invalide: ${hours}. Doit être un nombre positif.`);
     }
 
     // 🛡️ Validation durée minimum de 2 heures
     if (hours < 2) {
-      return { error: `Durée minimum de 2 heures requise. Durée actuelle: ${hours}h` };
+      return invalidResult(`Durée minimum de 2 heures requise. Durée actuelle: ${hours}h`);
     }
 
     const basePrice = hours * this.HOURLY_RATE;
@@ -106,25 +117,28 @@ export class PricingService {
       finalPrice: basePrice,
       discount: 0,
       discountPercentage: 0,
-      hourlyRate: this.HOURLY_RATE
+      hourlyRate: this.HOURLY_RATE,
     };
   }
 
   /**
    * 🔧 Calcule le prix à partir d'heures de début/fin (VERSION SÉCURISÉE)
    */
-  static calculatePriceFromTimeRange(startTime: string, endTime: string): PricingResult | { error: string } {
+  static calculatePriceFromTimeRange(startTime: string, endTime: string): PricingResult {
+      const invalidResult = (error: string): PricingResult => ({
+        hours: 0,
+        basePrice: 0,
+        finalPrice: 0,
+        discount: 0,
+        discountPercentage: 0,
+        hourlyRate: this.HOURLY_RATE,
+        error,
+      });
+
       // 🛡️ Validation des entrées
       if (!startTime || !endTime) {
         console.log('🔍 Heures de début et de fin requises');
-        return {
-          hours: 0,
-          basePrice: 0,
-          finalPrice: 0,
-          discount: 0,
-          discountPercentage: 0,
-          hourlyRate: this.HOURLY_RATE
-        };
+        return invalidResult('Heures de début et de fin requises');
       }
 
       console.log('🔍 Calcul pricing pour:', { startTime, endTime });
@@ -135,79 +149,58 @@ export class PricingService {
 
       if (!start || !end) {
         console.log('🔍 Erreur parsing des heures');
-        return { error: 'Format d\'heure invalide' };
+        return invalidResult("Format d'heure invalide");
       }
 
-      console.log('✅ Heures parsées:', { 
-        start: start.toTimeString(), 
-        end: end.toTimeString() 
+      console.log('✅ Heures parsées:', {
+        start: start.toTimeString(),
+        end: end.toTimeString()
       });
 
       // 🛡️ Vérification que l'heure de fin est après le début
       if (end <= start) {
         console.log('🔍 L\'heure de fin doit être après l\'heure de début');
-        return {
-          hours: 0,
-          basePrice: 0,
-          finalPrice: 0,
-          discount: 0,
-          discountPercentage: 0,
-          hourlyRate: this.HOURLY_RATE
-        };
+        return invalidResult("L'heure de fin doit être après l'heure de début");
       }
 
       // 🧮 Calcul de la durée en heures
       const diffMs = end.getTime() - start.getTime();
       const hours = diffMs / (1000 * 60 * 60);
 
-      console.log('🕐 Durée calculée:', { 
-        diffMs, 
-        hours: hours.toFixed(2) 
+      console.log('🕐 Durée calculée:', {
+        diffMs,
+        hours: hours.toFixed(2)
       });
 
       // 🛡️ Validation du résultat
       if (isNaN(hours) || hours <= 0) {
         console.log(`🔍 Durée invalide calculée: ${hours}h`);
-        return {
-          hours: 0,
-          basePrice: 0,
-          finalPrice: 0,
-          discount: 0,
-          discountPercentage: 0,
-          hourlyRate: this.HOURLY_RATE
-        };
+        return invalidResult(`Durée invalide calculée: ${hours}h`);
       }
       // 🛡️ Validation durée minimum (2 heures)
       if (hours < 2) {
         console.log(`🔍 Durée minimum de 2 heures requise. Durée actuelle: ${hours.toFixed(2)}h`);
-        return {
-          hours: 0,
-          basePrice: 0,
-          finalPrice: 0,
-          discount: 0,
-          discountPercentage: 0,
-          hourlyRate: this.HOURLY_RATE
-        };
+        return invalidResult(`Durée minimum de 2 heures requise. Durée actuelle: ${hours.toFixed(2)}h`);
       }
 
       const result = this.calculatePrice(hours);
-      
+
       console.log('💰 Pricing final:', result);
-      
-      // Check if calculatePrice returned an error
-      if ('error' in result) {
-        return result;
-      }
-      
+
       return result;
   }
 
   /**
    * 🛡️ Version fallback qui retourne un prix par défaut en cas d'erreur
    */
-  static calculatePriceFromTimeRangeSafe(startTime: string, endTime: string, minimalHours = 1): PricingResult | { error: string } {
-    // Plus besoin de try/catch car calculatePriceFromTimeRange ne lance plus d'exceptions
+  static calculatePriceFromTimeRangeSafe(startTime: string, endTime: string, minimalHours = 1): PricingResult {
     const result = this.calculatePriceFromTimeRange(startTime, endTime);
+
+    if (result.error && minimalHours > 0) {
+      const fallback = this.calculatePrice(minimalHours);
+      return { ...fallback, error: result.error };
+    }
+
     return result;
   }
 

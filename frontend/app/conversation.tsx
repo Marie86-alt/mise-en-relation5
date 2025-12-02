@@ -81,11 +81,11 @@ export default function ConversationScreen() {
     if (stableParams.heureDebut && stableParams.heureFin) {
       const { heureDebut, heureFin } = stableParams;
       const result = PricingService.calculatePriceFromTimeRangeSafe(heureDebut, heureFin, 1);
-      
-      if ('error' in result) {
+
+      if (result.error) {
         // Gestion de l'erreur sans exception - affichage dans l'interface
         console.log('🔍 Erreur pricing détectée:', result.error);
-        setPricingError(result.error);
+        setPricingError(result.error || 'Erreur de calcul de prix');
         setPricingData(null);
       } else {
         // Succès
