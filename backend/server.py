@@ -5,7 +5,7 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List
+from typing import Dict, List, Optional
 import uuid
 from datetime import datetime
 from contextlib import asynccontextmanager
@@ -110,6 +110,7 @@ class StatusCheckCreate(BaseModel):
 class PaymentIntentCreate(BaseModel):
     amount: int  # en centimes
     currency: str = "eur"
+    metadata: Optional[Dict[str, str]] = None
 
 
 # ------------------

@@ -38,6 +38,14 @@ export const PricingDisplay: React.FC<PricingDisplayProps> = ({
   const pricing = getPricing();
   const commission = showCommission ? PricingService.calculateCommission(pricing.finalPrice) : null;
 
+  if (pricing.error) {
+    return (
+      <View style={[styles.container, style]}>
+        <Text style={styles.errorText}>{pricing.error}</Text>
+      </View>
+    );
+  }
+
   if (pricing.hours === 0) {
     return (
       <View style={[styles.container, style]}>
@@ -102,7 +110,7 @@ export const PricingDisplay: React.FC<PricingDisplayProps> = ({
               {PricingService.formatPrice(commission.appCommission)} ({Math.round(commission.commissionRate * 100)}%)
             </Text>
           </View>
-        </div>
+        </View>
       )}
 
       {/* ✨ Message d'économie */}
@@ -167,6 +175,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#28a745',
     fontWeight: 'bold',
+  },
+
+  errorText: {
+    color: '#c92a2a',
+    fontWeight: '600',
+    textAlign: 'center',
   },
 
   totalRow: {

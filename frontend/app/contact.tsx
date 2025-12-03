@@ -1,6 +1,6 @@
 // app/contact.tsx
 import React, { useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +20,8 @@ const CONTACT = {
 };
 
 export default function ContactScreen() {
+  const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
   // Diagnostic des URL schemes au chargement
   useEffect(() => {
     const checkSchemes = async () => {
@@ -31,7 +33,7 @@ export default function ContactScreen() {
           const can = await Linking.canOpenURL(scheme);
           console.log(`  ${scheme} -> ${can ? '✅ Supporté' : '❌ Non supporté'}`);
         } catch (error) {
-          console.log(`  ${scheme} -> ❌ Erreur: ${error.message}`);
+          console.log(`  ${scheme} -> ❌ Erreur: ${errorMessage(error)}`);
         }
       }
     };
@@ -48,8 +50,8 @@ export default function ContactScreen() {
         await Linking.openURL(url);
         console.log('✅ Email ouvert avec succès');
         return;
-      } catch (directError) {
-        console.log('❌ Ouverture directe échouée, vérification canOpenURL...');
+      } catch (error) {
+        console.log('❌ Ouverture directe échouée, vérification canOpenURL...', errorMessage(error));
       }
       
       // Fallback avec canOpenURL
@@ -74,9 +76,9 @@ export default function ContactScreen() {
         );
       }
     } catch (error) {
-      console.error('❌ Erreur handleEmailPress:', error);
+      console.error('❌ Erreur handleEmailPress:', errorMessage(error));
       Alert.alert(
-        "Erreur", 
+        "Erreur",
         "Impossible d'ouvrir l'application e-mail.\n\nVous pouvez nous contacter à :\n" + CONTACT.email,
         [
           { text: "Copier l'email", onPress: async () => {
@@ -108,7 +110,7 @@ export default function ContactScreen() {
           return;
         }
       } catch (error) {
-        console.log(`❌ Échec format ${phoneNumber}:`, error.message);
+        console.log(`❌ Échec format ${phoneNumber}:`, errorMessage(error));
       }
     }
     
@@ -121,7 +123,7 @@ export default function ContactScreen() {
       console.log('✅ Dialer ouvert avec succès');
       return;
     } catch (dialError) {
-      console.log('❌ Échec ouverture dialer:', dialError.message);
+      console.log('❌ Échec ouverture dialer:', errorMessage(dialError));
     }
     
     // Fallback final avec message et copie

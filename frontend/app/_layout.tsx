@@ -5,7 +5,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 // import 'react-native-reanimated'; // Temporairement commenté pour éviter les erreurs
-import { useEffect, useState } from 'react';
+import { useEffect} from 'react';
 import { Platform, View, ActivityIndicator, Text, Image } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StripeProvider } from '@stripe/stripe-react-native';
@@ -137,22 +137,11 @@ function RootLayoutNav() {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({ SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf') });
-  const [isReady, setIsReady] = useState(false);
 
-  useEffect(() => {
-    // Délai minimum pour afficher notre écran de chargement personnalisé
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 1500); // 1.5 seconde minimum
-
-    return () => clearTimeout(timer);
-  }, []);
 
   if (!loaded) return null;
 
-  if (!isReady) {
-    return <CustomLoadingScreen />;
-  }
+ 
 
   return (
     <SafeAreaProvider>
