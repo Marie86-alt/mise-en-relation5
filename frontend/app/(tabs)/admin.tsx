@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   View, Text, ActivityIndicator, TouchableOpacity,
-  StyleSheet, FlatList, Alert, TextInput, SafeAreaView, Modal, ScrollView, Dimensions
+  StyleSheet, FlatList, Alert, TextInput, Modal, ScrollView
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 // import { LineChart, BarChart } from 'react-native-chart-kit'; // Temporairement commenté
 import { useAuth } from '@/src/contexts/AuthContext';
 import { Colors } from '@/constants/Colors';
