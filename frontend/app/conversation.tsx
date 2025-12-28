@@ -1,9 +1,9 @@
 // app/conversation.tsx
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo} from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView,
   Alert, Modal, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
@@ -31,16 +31,8 @@ export default function ConversationScreen() {
   const flatListRef = useRef<FlatList<Message>>(null);
   
   // Détection des dimensions d'écran pour ajuster l'interface
-  const [screenData, setScreenData] = useState(Dimensions.get('window'));
-  
-  useEffect(() => {
-    const onChange = (result: any) => {
-      setScreenData(result.window);
-    };
-    const subscription = Dimensions.addEventListener('change', onChange);
-    return () => subscription?.remove();
-  }, []);
-
+  const screenData = useWindowDimensions(); // { width, height, scale, fontScale }
+  const isSmallScreen = screenData.width < 380;
   // --- params stables (depuis la navigation)
   const rawParams = useLocalSearchParams();
   const getParam = (key: string): string => {
@@ -483,7 +475,7 @@ export default function ConversationScreen() {
             Créneau actuel : {stableParams.heureDebut} - {stableParams.heureFin}
           </Text>
           <Text style={styles.errorHint}>
-            Veuillez sélectionner un créneau d'au moins 2 heures consécutives.
+            Veuillez sélectionner un créneau d&apos au moins 2 heures consécutives.
           </Text>
         </View>
       );
@@ -675,6 +667,7 @@ export default function ConversationScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { paddingBottom: Platform.OS === 'android' ? 15 : 0 }]}>
+      <View style={{ flex: 1, paddingHorizontal: isSmallScreen ? 10 : 16 }}></View>
       <View style={styles.header}>
         <TouchableOpacity onPress={retournerEnArriere}>
           <Text style={styles.backButton}>← Retour</Text>
