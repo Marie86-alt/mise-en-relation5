@@ -1,4 +1,4 @@
-// app/_layout.tsx
+ééééà// app/_layout.tsx
 
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
