@@ -1,6 +1,7 @@
 """
 API routes initialization
 """
+
 from fastapi import APIRouter
 from .status import router as status_router
 from .payments import router as payments_router
