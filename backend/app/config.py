@@ -52,6 +52,5 @@ class Settings:
               if not self.STRIPE_SECRET_KEY:
                             logger.warning("⚠️ STRIPE_SECRET_KEY non défini - les paiements ne fonctionneront pas")
 
-
 # Create global settings instance
 settings = Settings()
