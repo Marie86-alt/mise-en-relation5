@@ -130,4 +130,75 @@ export const s = StyleSheet.create({
   },
   secteurLeft: { flex: 1, fontSize: 13, fontWeight: '700', color: '#11181C' },
   secteurRight: { fontSize: 12, color: '#6b7280' },
+
+   // NIVEAU 1 - UX/UI IMPROVEMENTS
+
+   // Table rows by status (recoloring)
+   tableRowActive: { backgroundColor: '#e8f5e9', borderLeftWidth: 4, borderLeftColor: '#4caf50' },
+ tableRowPending: { backgroundColor: '#fff3e0', borderLeftWidth: 4, borderLeftColor: '#ff9800' },
+ tableRowWarning: { backgroundColor: '#fff3e0', borderLeftWidth: 4, borderLeftColor: '#ff6f00' },
+ tableRowError: { backgroundColor: '#ffebee', borderLeftWidth: 4, borderLeftColor: '#f44336' },
+ tableRowInactive: { backgroundColor: '#f5f5f5', borderLeftWidth: 4, borderLeftColor: '#9e9e9e' },
+
+ // Tab badges (colored badges on admin tabs)
+ tabBadge: { 
+      paddingVertical: 3, 
+           paddingHorizontal: 6, 
+           borderRadius: 12, 
+           marginLeft: 6,
+           backgroundColor: Colors.light.danger,
+           minWidth: 20,
+           alignItems: 'center',
+           justifyContent: 'center'
+ },
+ tabBadgeText: { fontSize: 10, fontWeight: '700', color: '#fff' },
+ tabBadgeGreen: { backgroundColor: Colors.light.success },
+ tabBadgeOrange: { backgroundColor: '#ff9800' },
+ tabBadgeRed: { backgroundColor: Colors.light.danger },
+
+ // KPI Cards with colored borders
+ kpiCardPrimary: {
+      backgroundColor: '#fff',
+           borderWidth: 2,
+           borderColor: Colors.light.primary,
+           borderLeftWidth: 5,
+           borderLeftColor: Colors.light.primary,
+           borderRadius: 12,
+           padding: 16,
+           marginBottom: 12,
+        },
+         kpiCardSuccess: {
+              backgroundColor: '#fff',
+   borderWidth: 2,
+                   borderColor: Colors.light.success,
+                   borderLeftWidth: 5,
+                   borderLeftColor: Colors.light.success,
+                   borderRadius: 12,
+                   padding: 16,
+                   marginBottom: 12,
+                },
+                 kpiCardWarning: {
+                      backgroundColor: '#fff',
+                           borderWidth: 2,
+                           borderColor: '#ff9800',
+                           borderLeftWidth: 5,
+                           borderLeftColor: '#ff9800',
+                           borderRadius: 12,
+                           padding: 16,
+                           marginBottom: 12,
+                        },
+                         kpiCardDanger: {
+                              backgroundColor: '#fff',
+                                   borderWidth: 2,
+                                   borderColor: Colors.light.danger,
+                                   borderLeftWidth: 5,
+                                   borderLeftColor: Colors.light.danger,
+                                   borderRadius: 12,
+                                   padding: 16,
+                                   marginBottom: 12,
+                                },
+                                 kpiTitle: { fontSize: 12, color: '#687076', fontWeight: '500', marginBottom: 8 },
+ kpiValue: { fontSize: 28, fontWeight: '800', color: '#11181C', marginBottom: 4 },
+ kpiChange: { fontSize: 13, fontWeight: '600' },
 });
+
