@@ -1,5 +1,4 @@
-ééééééééééàéé→é→ééééééà// app/_layout.tsx
-
+// app/_layout.tsx
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
