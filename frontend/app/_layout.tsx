@@ -13,7 +13,7 @@ import '../firebase.config';
 import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
 import { applyTextInputDefaults } from '@/src/ui/applyTextInputDefaults';
 import { STRIPE_CONFIG } from '@/src/config/stripe';
-import ErrorBoundary from '@/frontend/components/ErrorBoundary';
+import ErrorBoundary from '@/components/ErrorBoundary';
 // import * as SplashScreen from 'expo-splash-screen'; // Plus nécessaire
 
 // Plus de splash screen Expo - utilisation seulement de notre écran personnalisé
