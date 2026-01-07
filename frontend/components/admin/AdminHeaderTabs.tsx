@@ -26,14 +26,14 @@ function TabBtn({
   return (
         <TouchableOpacity style={[styles.tabBtn, active && styles.tabBtnActive]} onPress={onPress}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                          <Text style={[styles.tabTxt, active && styles.tabTxtActive]}>{label}</Text>Text>
+                          <Text style={[styles.tabTxt, active && styles.tabTxtActive]}>{label}</Text>
                   {badgeCount !== undefined && badgeCount > 0 && (
                     <View style={[styles.tabBadge, badgeColorMap[badgeColor]]}>
-                                  <Text style={styles.tabBadgeText}>{badgeCount > 99 ? '99+' : badgeCount}</Text>Text>
-                    </View>View>
+                                  <Text style={styles.tabBadgeText}>{badgeCount > 99 ? '99+' : badgeCount}</Text>
+                    </View>
                   )}
-                </View>View>
-        </TouchableOpacity>TouchableOpacity>
+                </View>
+        </TouchableOpacity>
       );
 }
 
@@ -54,7 +54,7 @@ export function AdminHeaderTabs({
 }) {
     return (
           <View style={styles.header}>
-                  <Text style={styles.title}>Panel Administrateur</Text>Text>
+                  <Text style={styles.title}>Panel Administrateur</Text>
                   <View style={styles.tabs}>
                             <TabBtn 
                                         active={tab === 'validations'} 
@@ -86,7 +86,8 @@ export function AdminHeaderTabs({
                               label="📊 Stats" 
                               styles={styles}
                                       />
-                  </View>View>
-          </View>View>
+                  </View>
+          </View>
         );
 }
+
