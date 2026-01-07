@@ -131,8 +131,8 @@ function RootLayoutNav() {
                       <Stack.Screen name="profile-detail" options={{ headerShown: false }} />
                       <Stack.Screen name="profile-list" options={{ headerShown: false }} />
                       <Stack.Screen name="+not-found" />
-               </Stack>Stack>
-          </ErrorBoundary>ErrorBoundary>
+               </Stack>
+          </ErrorBoundary>
         );
 }
 
