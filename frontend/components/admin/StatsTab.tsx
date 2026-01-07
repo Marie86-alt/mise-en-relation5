@@ -37,22 +37,22 @@ export function StatsTab({
         <>
           {/* KPI principaux */}
           <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
+            <View style={styles.kpiCardPrimary}>
               <Text style={styles.statNumber}>{stats.totalUsers}</Text>
               <Text style={styles.statLabel}>👥 Utilisateurs</Text>
             </View>
 
-            <View style={styles.statCard}>
+            <View style={styles.kpiCardPrimary}>
               <Text style={styles.statNumber}>{stats.servicesRealises}</Text>
               <Text style={styles.statLabel}>✅ Services réalisés</Text>
             </View>
 
-            <View style={styles.statCard}>
+            <View style={styles.kpiCardPrimary}>
               <Text style={styles.statNumber}>{stats.conversationsActives}</Text>
               <Text style={styles.statLabel}>💬 Conversations actives</Text>
             </View>
 
-            <View style={styles.statCard}>
+            <View style={styles.kpiCardPrimary}>
               <Text style={styles.statNumber}>{stats.evaluationMoyenne.toFixed(1)}/5</Text>
               <Text style={styles.statLabel}>⭐ Note moyenne ({stats.totalAvis})</Text>
             </View>
@@ -105,7 +105,7 @@ export function StatsTab({
               <Text style={styles.muted}>Pas encore de revenus par secteur.</Text>
             ) : (
               (stats.topSecteursParRevenus ?? []).map((s, idx) => (
-                <View key={idx} style={styles.secteurRow}>
+                <View key={idx} style={[styles.secteurRow, styles.tableRowActive]}>
                   <Text style={styles.secteurLeft}>{s.secteur}</Text>
                   <Text style={styles.secteurRight}>
                     {s.revenue}€ • {s.services} srv
