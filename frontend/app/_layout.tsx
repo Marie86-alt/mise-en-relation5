@@ -153,7 +153,7 @@ export default function RootLayout() {
                                                           style={colorScheme === 'dark' ? 'light' : 'dark'}
                                                           translucent={Platform.OS === 'android'}
                                                         />
-                               </</ThemeProvider>
+                               </ThemeProvider>
                       </AuthProvider>
                </StripeProvider>
           </SafeAreaProvider>
