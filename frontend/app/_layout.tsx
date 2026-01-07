@@ -1,4 +1,4 @@
-ééééà// app/_layout.tsx
+ééééééééééàéé→é→ééééééà// app/_layout.tsx
 
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -65,7 +65,7 @@ function CustomLoadingScreen() {
                     letterSpacing: 1
           }}>
                             A La Case Nout Gramoun
-                  </Text>Text>
+                  </Text>
 
                   <Text style={{
                     fontSize: 16,
@@ -75,7 +75,7 @@ function CustomLoadingScreen() {
                     fontStyle: 'italic'
           }}>
                             Votre plateforme de services à domicile
-                  </Text>Text>
+                  </Text>
 
                   <ActivityIndicator size="large" color="#247ba0" />
 
@@ -87,8 +87,8 @@ function CustomLoadingScreen() {
                     fontWeight: '500'
           }}>
                             Chargement...
-                  </Text>Text>
-          </View>View>
+                  </Text>
+          </View>
         );
 }
 
