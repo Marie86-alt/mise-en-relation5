@@ -154,8 +154,7 @@ export default function RootLayout() {
                                                           translucent={Platform.OS === 'android'}
                                                         />
                                </ThemeProvider>ThemeProvider>
-                      </AuthProvider>AuthProvider>
-               </StripeProvider>StripeProvider>
-          </SafeAreaProvider>SafeAreaProvider>
+                      </AuthProvider>
+               </StripeProvider>
+          </SafeAreaProvider>
         );
-}</ErrorBoundary>
