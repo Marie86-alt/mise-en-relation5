@@ -25,7 +25,7 @@ function TabBtn({
 
   return (
         <TouchableOpacity style={[styles.tabBtn, active && styles.tabBtnActive]} onPress={onPress}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                           <Text style={[styles.tabTxt, active && styles.tabTxtActive]}>{label}</Text>Text>
                   {badgeCount !== undefined && badgeCount > 0 && (
                     <View style={[styles.tabBadge, badgeColorMap[badgeColor]]}>
@@ -78,7 +78,7 @@ export function AdminHeaderTabs({
                               label="Conversations" 
                               styles={styles}
                                         badgeCount={conversationsCount}
-                                        badgeColor="blue"
+                                        badgeColor="orange"
                                       />
                             <TabBtn 
                                         active={tab === 'stats'} 
