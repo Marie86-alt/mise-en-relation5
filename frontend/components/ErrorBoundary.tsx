@@ -43,21 +43,21 @@ export default class ErrorBoundary extends React.Component<Props, State> {
                 return (
                           <View style={styles.container}>
                                       <View style={styles.errorBox}>
-                                                    <Text style={styles.errorIcon}>⚠️</Text>Text>
-                                                    <Text style={styles.errorTitle}>Une erreur est survenue</Text>Text>
-                                                    <Text style={styles.errorMessage}>{this.state.errorMessage}</Text>Text>
+                                                    <Text style={styles.errorIcon}>⚠️</Text>
+                                                    <Text style={styles.errorTitle}>Une erreur est survenue</Text>
+                                                    <Text style={styles.errorMessage}>{this.state.errorMessage}</Text>
 
                                                     <TouchableOpacity style={styles.resetButton} onPress={this.handleReset}>
-                                                                    <Text style={styles.resetButtonText}>Réessayer</Text>Text>
+                                                                    <Text style={styles.resetButtonText}>Réessayer</Text>
                                                     </TouchableOpacity>TouchableOpacity>
 
                                         {__DEV__ && (
                                           <Text style={styles.devMessage}>
                                                             (En développement: {this.state.errorMessage})
-                                          </Text>Text>
+                                          </Text>
                                         )}
-                                      </View>View>
-                          </View>View>
+                                      </View>
+                          </View>
                         );
         }
 
