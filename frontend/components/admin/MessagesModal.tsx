@@ -73,8 +73,8 @@ export function MessagesModal({
                                                                                 }}
                                                                               >
                                                                             ← Fermer
-                                                            </Text>Text>
-                                              </TouchableOpacity>TouchableOpacity>
+                                                            </Text>
+                                              </TouchableOpacity>
                                               <Text
                                                                 style={{
                                                                                     fontSize: 12,
@@ -83,8 +83,8 @@ export function MessagesModal({
                                                                 }}
                                                               >
                                                   {messageCount} message{messageCount > 1 ? 's' : ''}
-                                              </Text>Text>
-                                  </View>View>
+                                              </Text>
+                                  </View>
                                   <Text
                                                   style={{
                                                                     fontSize: 18,
@@ -94,11 +94,11 @@ export function MessagesModal({
                                                   }}
                                                 >
                                               💬 Conversation
-                                  </Text>Text>
+                                  </Text>
                                   <Text style={{ fontSize: 12, color: '#999' }}>
                                               Affichage des messages échangés
-                                  </Text>Text>
-                        </View>View>
+                                  </Text>
+                        </View>
                 
                     {/* Liste des messages */}
                         <ScrollView
@@ -121,8 +121,8 @@ export function MessagesModal({
                                                                                           }}
                                                                                     >
                                                                                   Aucun message dans cette conversation
-                                                                  </Text>Text>
-                                                    </View>View>
+                                                                  </Text>
+                                                    </View>
                                                   ) : (
                                                     messages.map((msg, idx) => (
                                                                       <View
@@ -161,7 +161,7 @@ export function MessagesModal({
                                                                                                                                     }}
                                                                                                                               >
                                                                                                                             👤 {msg.expediteurName || 'Utilisateur inconnu'}
-                                                                                                            </Text>Text>
+                                                                                                            </Text>
                                                                                                         <TouchableOpacity
                                                                                                                                 style={{
                                                                                                                                                           paddingHorizontal: 8,
@@ -171,9 +171,9 @@ export function MessagesModal({
                                                                                                                                     }}
                                                                                                                                 onPress={() => onDeleteMessage(msg)}
                                                                                                                               >
-                                                                                                                            <Text style={{ fontSize: 14 }}>🗑️</Text>Text>
-                                                                                                            </TouchableOpacity>TouchableOpacity>
-                                                                                          </View>View>
+                                                                                                                            <Text style={{ fontSize: 14 }}>🗑️</Text>
+                                                                                                            </TouchableOpacity>
+                                                                                          </View>
                                                                       
                                                                           {/* Contenu du message */}
                                                                                       <Text
@@ -185,7 +185,7 @@ export function MessagesModal({
                                                                                                                 }}
                                                                                                           >
                                                                                           {msg.texte}
-                                                                                          </Text>Text>
+                                                                                          </Text>
                                                                       
                                                                           {/* Footer avec date/heure */}
                                                                                       <Text
@@ -197,15 +197,15 @@ export function MessagesModal({
                                                                                                                 }}
                                                                                                           >
                                                                                                         🕐 {formatDate(msg.createdAt)}
-                                                                                          </Text>Text>
-                                                                      </View>View>
+                                                                                          </Text>
+                                                                      </View>
                                                                     ))
                                                   )}
                         
                             {/* Espacement en bas */}
                                   <View style={{ height: 16 }} />
-                        </ScrollView>ScrollView>
-                </SafeAreaView>SafeAreaView>
-          </Modal>Modal>
+                        </ScrollView>
+                </SafeAreaView>
+          </Modal>
         );
-}</Modal>
+}
