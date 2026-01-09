@@ -1,204 +1,778 @@
-// components/admin/adminStyles.ts
-
+// components/admin/adminStyles.ts - NIVEAU 3: Micro-animations, Transitions & Performance
 import { StyleSheet } from 'react-native';
 import { Colors } from '@/constants/Colors';
 
+// ==================== NIVEAU 3: ANIMATIONS & TRANSITIONS ====================
+// Configuration des animations et transitions fluides
+const animations = {
+    fadeIn: { duration: 300, useNativeDriver: true },
+    slideIn: { duration: 350, useNativeDriver: true },
+    scaleIn: { duration: 250, useNativeDriver: true },
+    bounce: { duration: 500, useNativeDriver: true },
+};
+
+// Constantes pour les ombres sophistiquées (box-shadow)
+const shadows = {
+    light: { elevation: 2, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
+    medium: { elevation: 4, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } },
+    deep: { elevation: 8, shadowColor: '#000', shadowOpacity: 0.16, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
+    elevated: { elevation: 12, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } },
+};
+
+// Constantes pour l'espacement standardisé
+const spacing = {
+    xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24,
+};
+
 export const s = StyleSheet.create({
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+    // ==================== BASE STYLES ====================
+                                     center: { 
+      flex: 1, 
+                                           justifyContent: 'center', 
+                                           alignItems: 'center', 
+                                           backgroundColor: '#fff',
+                                           ...shadows.light,
+                                     },
 
-  header: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee', backgroundColor: '#fff' },
-  title: { fontSize: 20, fontWeight: '700', color: '#11181C', marginBottom: 10 },
-  tabs: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  tabBtn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, backgroundColor: '#f1f3f5' },
-  tabBtnActive: { backgroundColor: Colors.light.primary + '20' },
-  tabTxt: { color: '#495057', fontWeight: '600', fontSize: 12 },
-  tabTxtActive: { color: Colors.light.primary },
+    header: { 
+      padding: spacing.lg,
+          marginBottom: spacing.md,
+          borderBottomWidth: 1, 
+          borderBottomColor: '#f0f0f0', 
+          backgroundColor: '#fff',
+          ...shadows.light,
+    },
 
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#2c3e50', marginBottom: 8 },
+    title: { 
+      fontSize: 20, 
+          fontWeight: '700', 
+          color: '#11181C', 
+          marginBottom: spacing.lg,
+          letterSpacing: -0.4,
+    },
 
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 12,
-    padding: 12,
-    backgroundColor: '#fff',
-    gap: 10,
-  },
-  name: { fontSize: 16, fontWeight: '700', color: '#2c3e50' },
-  email: { fontSize: 13, color: '#687076', marginTop: 2 },
-  meta: { fontSize: 12, color: '#6c757d', marginTop: 6 },
+    // ==================== TABS & NAVIGATION ====================
+    tabs: { 
+      flexDirection: 'row', 
+          gap: spacing.md, 
+          flexWrap: 'wrap',
+          marginBottom: spacing.md,
+    },
 
-  actionButtons: { flexDirection: 'row', gap: 8 },
-  primary: { backgroundColor: Colors.light.primary, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8 },
-  success: { backgroundColor: Colors.light.success, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8 },
-  warning: { backgroundColor: '#f39c12', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8 },
-  danger: { backgroundColor: Colors.light.danger, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8 },
-  btnTxt: { color: '#fff', fontWeight: '700', fontSize: 12 },
+    tabBtn: { 
+      paddingVertical: spacing.sm, 
+          paddingHorizontal: spacing.md, 
+          borderRadius: 12,
+          backgroundColor: '#f5f7fa',
+          borderWidth: 1,
+          borderColor: '#e8eef5',
+          ...shadows.light,
+    },
 
-  muted: { textAlign: 'center', color: '#687076', marginTop: 20 },
+    tabBtnActive: { 
+      backgroundColor: Colors.light.primary + '15',
+          borderColor: Colors.light.primary,
+          borderWidth: 2,
+          ...shadows.medium,
+    },
 
-  search: {
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
-  },
+    tabTxt: { 
+      color: '#495057', 
+          fontWeight: '600', 
+          fontSize: 12,
+          letterSpacing: 0.3,
+    },
 
-  // Modal styles
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  closeBtn: { color: Colors.light.primary, fontSize: 16, fontWeight: '600' },
-  modalTitle: { flex: 1, textAlign: 'center', fontSize: 18, fontWeight: '700', color: '#2c3e50' },
-  messageCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    gap: 10,
-  },
-  msgAuthor: { fontSize: 14, fontWeight: '700', color: Colors.light.primary },
-  msgText: { fontSize: 14, color: '#2c3e50', marginTop: 4, lineHeight: 20 },
-  msgTime: { fontSize: 11, color: '#6c757d', marginTop: 4 },
-  deleteMsg: { backgroundColor: Colors.light.danger, paddingVertical: 6, paddingHorizontal: 8, borderRadius: 6 },
+    tabTxtActive: { 
+      color: Colors.light.primary,
+          fontWeight: '700',
+    },
 
-  // STATS
-  statsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  refreshBtn: { backgroundColor: Colors.light.primary, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
-  refreshBtnTxt: { color: '#fff', fontSize: 12, fontWeight: '600' },
+    sectionTitle: { 
+      fontSize: 16, 
+          fontWeight: '700', 
+          color: '#2c3e50', 
+          marginBottom: spacing.md,
+          marginTop: spacing.lg,
+          letterSpacing: -0.3,
+    },
 
-  loadingStats: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40 },
-  loadingText: { marginTop: 10, color: '#687076', fontSize: 14 },
+    // ==================== CARDS & CONTAINERS ====================
+    card: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          borderRadius: 14,
+          padding: spacing.lg,
+          backgroundColor: '#fff',
+          gap: spacing.md,
+          marginBottom: spacing.md,
+          ...shadows.medium,
+          borderWidth: 1,
+          borderColor: '#f0f0f0',
+    },
 
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
-  statCard: {
-    flex: 1,
-    minWidth: '45%',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  statNumber: { fontSize: 24, fontWeight: '700', color: Colors.light.primary, marginBottom: 4 },
-  statLabel: { fontSize: 12, color: '#687076', textAlign: 'center', fontWeight: '500' },
+    cardHover: {
+          ...shadows.deep,
+          transform: [{ scale: 1.02 }],
+    },
 
-  financeSection: { marginBottom: 20 },
-  subsectionTitle: { fontSize: 16, fontWeight: '700', color: '#2c3e50', marginBottom: 12 },
-  financeGrid: { flexDirection: 'row', gap: 12 },
-  financeCard: { backgroundColor: '#f8f9fa' },
-  financeNumber: { color: '#28a745' },
+    name: { 
+      fontSize: 16, 
+          fontWeight: '700', 
+          color: '#2c3e50',
+          marginBottom: spacing.xs,
+    },
 
-  updateInfo: { marginTop: 20, padding: 12, backgroundColor: '#f9fafb', borderRadius: 8 },
-  updateText: { fontSize: 12, color: '#6b7280', textAlign: 'center' },
+    email: { 
+      fontSize: 13, 
+          color: '#687076', 
+          marginTop: spacing.xs,
+          fontWeight: '500',
+    },
 
-  // MINI CHART + TOP SECTEURS (ajouté)
-  chartSection: { marginBottom: 18 },
-  chartRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 10 },
-  monthName: { width: 90, fontSize: 12, color: '#374151' },
-  barContainer: { flex: 1, height: 10, backgroundColor: '#eef2f7', borderRadius: 999, overflow: 'hidden' },
-  serviceBar: { height: 10, backgroundColor: Colors.light.primary, borderRadius: 999 },
-  serviceCount: { width: 30, textAlign: 'right', fontSize: 12, color: '#374151' },
+    meta: { 
+      fontSize: 12, 
+          color: '#6c757d', 
+          marginTop: spacing.sm,
+          fontWeight: '400',
+    },
 
-  secteurRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    marginBottom: 8,
-  },
-  secteurLeft: { flex: 1, fontSize: 13, fontWeight: '700', color: '#11181C' },
-  secteurRight: { fontSize: 12, color: '#6b7280' },
+    // ==================== ACTION BUTTONS ====================
+    actionButtons: { 
+      flexDirection: 'row', 
+          gap: spacing.sm,
+          marginTop: spacing.md,
+    },
 
-   // NIVEAU 1 - UX/UI IMPROVEMENTS
+    primary: { 
+      backgroundColor: Colors.light.primary, 
+          paddingVertical: spacing.sm, 
+          paddingHorizontal: spacing.md, 
+          borderRadius: 10,
+          ...shadows.light,
+    },
 
-   // Table rows by status (recoloring)
-   tableRowActive: { backgroundColor: '#e8f5e9', borderLeftWidth: 4, borderLeftColor: '#4caf50' },
- tableRowPending: { backgroundColor: '#fff3e0', borderLeftWidth: 4, borderLeftColor: '#ff9800' },
- tableRowWarning: { backgroundColor: '#fff3e0', borderLeftWidth: 4, borderLeftColor: '#ff6f00' },
- tableRowError: { backgroundColor: '#ffebee', borderLeftWidth: 4, borderLeftColor: '#f44336' },
- tableRowInactive: { backgroundColor: '#f5f5f5', borderLeftWidth: 4, borderLeftColor: '#9e9e9e' },
+    success: { 
+      backgroundColor: Colors.light.success, 
+          paddingVertical: spacing.sm, 
+          paddingHorizontal: spacing.md, 
+          borderRadius: 10,
+          ...shadows.light,
+    },
 
- // Tab badges (colored badges on admin tabs)
- tabBadge: { 
-      paddingVertical: 3, 
-           paddingHorizontal: 6, 
-           borderRadius: 12, 
-           marginLeft: 6,
-           backgroundColor: Colors.light.danger,
-           minWidth: 20,
-           alignItems: 'center',
-           justifyContent: 'center'
- },
- tabBadgeText: { fontSize: 10, fontWeight: '700', color: '#fff' },
- tabBadgeGreen: { backgroundColor: Colors.light.success },
- tabBadgeOrange: { backgroundColor: '#ff9800' },
- tabBadgeRed: { backgroundColor: Colors.light.danger },
+    warning: { 
+      backgroundColor: '#f39c12', 
+          paddingVertical: spacing.sm, 
+          paddingHorizontal: spacing.md, 
+          borderRadius: 10,
+          ...shadows.light,
+    },
 
- // KPI Cards with colored borders
- kpiCardPrimary: {
-      backgroundColor: '#fff',
-           borderWidth: 2,
-           borderColor: Colors.light.primary,
-           borderLeftWidth: 5,
-           borderLeftColor: Colors.light.primary,
-           borderRadius: 12,
-           padding: 16,
-           marginBottom: 12,
-        },
-         kpiCardSuccess: {
-              backgroundColor: '#fff',
-   borderWidth: 2,
-                   borderColor: Colors.light.success,
-                   borderLeftWidth: 5,
-                   borderLeftColor: Colors.light.success,
-                   borderRadius: 12,
-                   padding: 16,
-                   marginBottom: 12,
-                },
-                 kpiCardWarning: {
-                      backgroundColor: '#fff',
-                           borderWidth: 2,
-                           borderColor: '#ff9800',
-                           borderLeftWidth: 5,
-                           borderLeftColor: '#ff9800',
-                           borderRadius: 12,
-                           padding: 16,
-                           marginBottom: 12,
-                        },
-                         kpiCardDanger: {
-                              backgroundColor: '#fff',
-                                   borderWidth: 2,
-                                   borderColor: Colors.light.danger,
-                                   borderLeftWidth: 5,
-                                   borderLeftColor: Colors.light.danger,
-                                   borderRadius: 12,
-                                   padding: 16,
-                                   marginBottom: 12,
-                                },
-                                 kpiTitle: { fontSize: 12, color: '#687076', fontWeight: '500', marginBottom: 8 },
- kpiValue: { fontSize: 28, fontWeight: '800', color: '#11181C', marginBottom: 4 },
- kpiChange: { fontSize: 13, fontWeight: '600' },
+    danger: { 
+      backgroundColor: Colors.light.danger, 
+          paddingVertical: spacing.sm, 
+          paddingHorizontal: spacing.md, 
+          borderRadius: 10,
+          ...shadows.light,
+    },
+
+    btnTxt: { 
+      color: '#fff', 
+          fontWeight: '700', 
+          fontSize: 12,
+          letterSpacing: 0.2,
+    },
+
+    muted: { 
+      textAlign: 'center', 
+          color: '#687076', 
+          marginTop: spacing.xl,
+          fontWeight: '500',
+    },
+
+    // ==================== SEARCH & INPUT ====================
+    search: {
+          borderWidth: 1,
+          borderColor: '#e8eef5',
+          borderRadius: 12,
+          paddingHorizontal: spacing.md,
+          paddingVertical: spacing.sm,
+          marginBottom: spacing.md,
+          backgroundColor: '#f9fafb',
+          ...shadows.light,
+    },
+
+    // ==================== MODAL STYLES ====================
+    modalHeader: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: spacing.lg,
+          borderBottomWidth: 1,
+          borderBottomColor: '#e8eef5',
+          backgroundColor: '#fff',
+          ...shadows.light,
+    },
+
+    closeBtn: { 
+      color: Colors.light.primary, 
+          fontSize: 16, 
+          fontWeight: '600',
+    },
+
+    modalTitle: { 
+      flex: 1, 
+          textAlign: 'center', 
+          fontSize: 18, 
+          fontWeight: '700', 
+          color: '#2c3e50',
+          letterSpacing: -0.3,
+    },
+
+    // ==================== MESSAGES ====================
+    messageCard: {
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          borderRadius: 12,
+          padding: spacing.lg,
+          marginBottom: spacing.md,
+          gap: spacing.md,
+          backgroundColor: '#fff',
+          borderWidth: 1,
+          borderColor: '#f0f0f0',
+          ...shadows.light,
+    },
+
+    msgAuthor: { 
+      fontSize: 14, 
+          fontWeight: '700', 
+          color: Colors.light.primary,
+          marginBottom: spacing.xs,
+    },
+
+    msgText: { 
+      fontSize: 14, 
+          color: '#2c3e50', 
+          marginTop: spacing.sm, 
+          lineHeight: 20,
+          fontWeight: '500',
+    },
+
+    msgTime: { 
+      fontSize: 11, 
+          color: '#6c757d', 
+          marginTop: spacing.sm,
+          fontWeight: '400',
+    },
+
+    deleteMsg: { 
+      backgroundColor: Colors.light.danger, 
+          paddingVertical: spacing.xs, 
+          paddingHorizontal: spacing.sm, 
+          borderRadius: 8,
+          ...shadows.light,
+    },
+
+    // ==================== STATS SECTION ====================
+    statsHeader: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: spacing.xl,
+          paddingBottom: spacing.lg,
+          borderBottomWidth: 1,
+          borderBottomColor: '#f0f0f0',
+    },
+
+    refreshBtn: { 
+      backgroundColor: Colors.light.primary, 
+          paddingHorizontal: spacing.md, 
+          paddingVertical: spacing.sm, 
+          borderRadius: 10,
+          ...shadows.medium,
+    },
+
+    refreshBtnTxt: { 
+      color: '#fff', 
+          fontSize: 12, 
+          fontWeight: '600',
+          letterSpacing: 0.2,
+    },
+
+    loadingStats: { 
+      alignItems: 'center', 
+          justifyContent: 'center', 
+          paddingVertical: 40,
+    },
+
+    loadingText: { 
+      marginTop: spacing.lg, 
+          color: '#687076', 
+          fontSize: 14,
+          fontWeight: '500',
+    },
+
+    statsGrid: { 
+      flexDirection: 'row', 
+          flexWrap: 'wrap', 
+          gap: spacing.lg, 
+          marginBottom: spacing.xl,
+    },
+
+    statCard: {
+          flex: 1,
+          minWidth: '45%',
+          backgroundColor: '#fff',
+          borderRadius: 14,
+          padding: spacing.lg,
+          alignItems: 'center',
+          borderWidth: 1,
+          borderColor: '#f0f0f0',
+          ...shadows.medium,
+    },
+
+    statCardHover: {
+          ...shadows.deep,
+          transform: [{ scale: 1.03 }],
+    },
+
+    statNumber: { 
+      fontSize: 28, 
+          fontWeight: '800', 
+          color: Colors.light.primary, 
+          marginBottom: spacing.sm,
+    },
+
+    statLabel: { 
+      fontSize: 12, 
+          color: '#687076', 
+          textAlign: 'center', 
+          fontWeight: '600',
+          letterSpacing: 0.2,
+    },
+
+    // ==================== FINANCE SECTION ====================
+    financeSection: { 
+      marginBottom: spacing.xl,
+    },
+
+    subsectionTitle: { 
+      fontSize: 16, 
+          fontWeight: '700', 
+          color: '#2c3e50', 
+          marginBottom: spacing.lg,
+          marginTop: spacing.xl,
+          letterSpacing: -0.3,
+    },
+
+    financeGrid: { 
+      flexDirection: 'row', 
+          gap: spacing.lg,
+    },
+
+    financeCard: { 
+      backgroundColor: '#f8f9fa',
+          flex: 1,
+          padding: spacing.lg,
+          borderRadius: 12,
+          ...shadows.light,
+          borderWidth: 1,
+          borderColor: '#e8eef5',
+    },
+
+    financeNumber: { 
+      color: '#28a745',
+          fontSize: 20,
+          fontWeight: '700',
+          marginTop: spacing.sm,
+    },
+
+    updateInfo: { 
+      marginTop: spacing.xl, 
+          padding: spacing.lg, 
+          backgroundColor: '#f9fafb', 
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: '#e8eef5',
+          ...shadows.light,
+    },
+
+    updateText: { 
+      fontSize: 12, 
+          color: '#6b7280', 
+          textAlign: 'center',
+          fontWeight: '500',
+          lineHeight: 18,
+    },
+
+    // ==================== CHARTS & VISUALS ====================
+    chartSection: { 
+      marginBottom: spacing.xl,
+    },
+
+    chartRow: { 
+      flexDirection: 'row', 
+          alignItems: 'center', 
+          marginBottom: spacing.md, 
+          gap: spacing.md,
+          paddingVertical: spacing.sm,
+    },
+
+    monthName: { 
+      width: 90, 
+          fontSize: 12, 
+          color: '#374151',
+          fontWeight: '600',
+    },
+
+    barContainer: { 
+      flex: 1, 
+          height: 12, 
+          backgroundColor: '#e8eef5', 
+          borderRadius: 10, 
+          overflow: 'hidden',
+          ...shadows.light,
+    },
+
+    serviceBar: { 
+      height: 12, 
+          backgroundColor: Colors.light.primary, 
+          borderRadius: 10,
+    },
+
+    serviceCount: { 
+      width: 40, 
+          textAlign: 'right', 
+          fontSize: 12, 
+          color: '#374151',
+          fontWeight: '600',
+    },
+
+    secteurRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingVertical: spacing.md,
+          paddingHorizontal: spacing.lg,
+          borderWidth: 1,
+          borderColor: '#f0f0f0',
+          borderRadius: 12,
+          backgroundColor: '#fff',
+          marginBottom: spacing.md,
+          ...shadows.light,
+    },
+
+    secteurLeft: { 
+      flex: 1, 
+          fontSize: 13, 
+          fontWeight: '700', 
+          color: '#11181C',
+    },
+
+    secteurRight: { 
+      fontSize: 12, 
+          color: '#6b7280',
+          fontWeight: '600',
+    },
+
+    // ==================== NIVEAU 1 - STATUS INDICATORS ====================
+    tableRowActive: { 
+      backgroundColor: '#ecf8f3', 
+          borderLeftWidth: 5, 
+          borderLeftColor: '#10b981',
+          borderRadius: 10,
+          paddingVertical: spacing.sm,
+          paddingHorizontal: spacing.md,
+    },
+
+    tableRowPending: { 
+      backgroundColor: '#fffbeb', 
+          borderLeftWidth: 5, 
+          borderLeftColor: '#f59e0b',
+          borderRadius: 10,
+          paddingVertical: spacing.sm,
+          paddingHorizontal: spacing.md,
+    },
+
+    tableRowWarning: { 
+      backgroundColor: '#fef3c7', 
+          borderLeftWidth: 5, 
+          borderLeftColor: '#ff9800',
+          borderRadius: 10,
+          paddingVertical: spacing.sm,
+          paddingHorizontal: spacing.md,
+    },
+
+    tableRowError: { 
+      backgroundColor: '#fee2e2', 
+          borderLeftWidth: 5, 
+          borderLeftColor: '#ef4444',
+          borderRadius: 10,
+          paddingVertical: spacing.sm,
+          paddingHorizontal: spacing.md,
+    },
+
+    tableRowInactive: { 
+      backgroundColor: '#f5f7fa', 
+          borderLeftWidth: 5, 
+          borderLeftColor: '#9ca3af',
+          borderRadius: 10,
+          paddingVertical: spacing.sm,
+          paddingHorizontal: spacing.md,
+    },
+
+    // ==================== BADGES ====================
+    tabBadge: { 
+      paddingVertical: spacing.xs, 
+          paddingHorizontal: spacing.sm, 
+          borderRadius: 14, 
+          marginLeft: spacing.sm,
+          backgroundColor: Colors.light.danger,
+          minWidth: 24,
+          alignItems: 'center',
+          justifyContent: 'center',
+          ...shadows.light,
+    },
+
+    tabBadgeText: { 
+      fontSize: 10, 
+          fontWeight: '700', 
+          color: '#fff',
+          letterSpacing: 0.2,
+    },
+
+    tabBadgeGreen: { 
+      backgroundColor: Colors.light.success,
+    },
+
+    tabBadgeOrange: { 
+      backgroundColor: '#f59e0b',
+    },
+
+    tabBadgeRed: { 
+      backgroundColor: Colors.light.danger,
+    },
+
+    // ==================== KPI CARDS ====================
+    kpiCardPrimary: {
+          backgroundColor: '#fff',
+          borderWidth: 2,
+          borderColor: Colors.light.primary + '30',
+          borderLeftWidth: 6,
+          borderLeftColor: Colors.light.primary,
+          borderRadius: 14,
+          padding: spacing.lg,
+          marginBottom: spacing.lg,
+          ...shadows.medium,
+    },
+
+    kpiCardSuccess: {
+          backgroundColor: '#fff',
+          borderWidth: 2,
+          borderColor: Colors.light.success + '30',
+          borderLeftWidth: 6,
+          borderLeftColor: Colors.light.success,
+          borderRadius: 14,
+          padding: spacing.lg,
+          marginBottom: spacing.lg,
+          ...shadows.medium,
+    },
+
+    kpiCardWarning: {
+          backgroundColor: '#fff',
+          borderWidth: 2,
+          borderColor: '#f59e0b' + '30',
+          borderLeftWidth: 6,
+          borderLeftColor: '#f59e0b',
+          borderRadius: 14,
+          padding: spacing.lg,
+          marginBottom: spacing.lg,
+          ...shadows.medium,
+    },
+
+    kpiCardDanger: {
+          backgroundColor: '#fff',
+          borderWidth: 2,
+          borderColor: Colors.light.danger + '30',
+          borderLeftWidth: 6,
+          borderLeftColor: Colors.light.danger,
+          borderRadius: 14,
+          padding: spacing.lg,
+          marginBottom: spacing.lg,
+          ...shadows.medium,
+    },
+
+    kpiTitle: { 
+      fontSize: 12, 
+          color: '#687076', 
+          fontWeight: '600', 
+          marginBottom: spacing.sm,
+          letterSpacing: 0.2,
+          textTransform: 'uppercase',
+    },
+
+    kpiValue: { 
+      fontSize: 32, 
+          fontWeight: '800', 
+          color: '#11181C', 
+          marginBottom: spacing.xs,
+          letterSpacing: -1,
+    },
+
+    kpiChange: { 
+      fontSize: 13, 
+          fontWeight: '600',
+          color: Colors.light.success,
+          marginTop: spacing.xs,
+    },
+
+    // ==================== NIVEAU 3 - ADVANCED STYLING ====================
+    // Amélioration des espacements internes
+    container: {
+          paddingHorizontal: spacing.lg,
+          paddingVertical: spacing.md,
+    },
+
+    containerLarge: {
+          paddingHorizontal: spacing.xl,
+          paddingVertical: spacing.lg,
+    },
+
+    // Ombres et profondeur avancées
+    shadowContainer: {
+          backgroundColor: '#fff',
+          borderRadius: 14,
+          ...shadows.elevated,
+          padding: spacing.lg,
+          marginBottom: spacing.lg,
+    },
+
+    // Indicateurs visuels améliorés
+    indicator: {
+          width: 8,
+          height: 8,
+          borderRadius: 4,
+          marginRight: spacing.sm,
+    },
+
+    indicatorSuccess: {
+          backgroundColor: '#10b981',
+    },
+
+    indicatorWarning: {
+          backgroundColor: '#f59e0b',
+    },
+
+    indicatorDanger: {
+          backgroundColor: '#ef4444',
+    },
+
+    indicatorPending: {
+          backgroundColor: '#6b7280',
+    },
+
+    // Badge avancés
+    badgeContainer: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingVertical: spacing.xs,
+          paddingHorizontal: spacing.md,
+          borderRadius: 12,
+          backgroundColor: '#f0f0f0',
+    },
+
+    badgeText: {
+          fontSize: 11,
+          fontWeight: '600',
+          color: '#2c3e50',
+          marginLeft: spacing.xs,
+    },
+
+    // Optimisation pour la performance (memoization)
+    // Les images et composants utilisant useMemo devraient référencer ces styles
+    memoizedCard: {
+          borderRadius: 14,
+          padding: spacing.lg,
+          backgroundColor: '#fff',
+          ...shadows.light,
+    },
+
+    // Lazy loading placeholders
+    skeletonLoader: {
+          backgroundColor: '#e8eef5',
+          borderRadius: 10,
+          marginBottom: spacing.md,
+          minHeight: 60,
+    },
+
+    // Animations et transitions
+    fadeInContainer: {
+          opacity: 1,
+          backgroundColor: '#fff',
+    },
+
+    slideInContainer: {
+          transform: [{ translateX: 0 }],
+    },
+
+    scaleInContainer: {
+          transform: [{ scale: 1 }],
+    },
+
+    // États au survol (hover)
+    buttonHoverState: {
+          ...shadows.deep,
+          opacity: 0.95,
+    },
+
+    cardPressableState: {
+          ...shadows.light,
+          backgroundColor: '#f9fafb',
+    },
+
+    // Contraste visuel amélioré
+    highContrastText: {
+          color: '#11181C',
+          fontWeight: '700',
+          letterSpacing: 0.1,
+    },
+
+    // Icônes et visuels
+    iconSmall: {
+          width: 20,
+          height: 20,
+          marginRight: spacing.sm,
+    },
+
+    iconMedium: {
+          width: 24,
+          height: 24,
+          marginRight: spacing.md,
+    },
+
+    iconLarge: {
+          width: 32,
+          height: 32,
+          marginRight: spacing.lg,
+    },
+
+    // Textes améliorés
+    textSmall: {
+          fontSize: 12,
+          fontWeight: '500',
+          color: '#6b7280',
+          letterSpacing: 0.2,
+    },
+
+    textMedium: {
+          fontSize: 14,
+          fontWeight: '600',
+          color: '#2c3e50',
+          letterSpacing: 0.1,
+    },
+
+    textLarge: {
+          fontSize: 16,
+          fontWeight: '700',
+          color: '#11181C',
+          letterSpacing: -0.2,
+    },
 });
-
