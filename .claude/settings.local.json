@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(adb:*)"
+      "Bash(adb:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

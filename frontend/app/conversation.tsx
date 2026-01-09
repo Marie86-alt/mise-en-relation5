@@ -664,7 +664,11 @@ export default function ConversationScreen() {
   return (
     <SafeAreaView style={[styles.container, { paddingBottom: Platform.OS === 'android' ? 15 : 0 }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={retournerEnArriere}>
+        <TouchableOpacity
+          onPress={retournerEnArriere}
+          style={styles.backButtonTouchable}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <Text style={styles.backButton}>← Retour</Text>
         </TouchableOpacity>
 
@@ -819,12 +823,16 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: Platform.OS === 'android' ? 10 : 15,
   },
-  backButton: { 
-    color: Colors.light.primary, 
-    fontSize: 16, 
-    fontWeight: '500',
-    marginBottom: 10,
-    paddingVertical: 5,
+  backButtonTouchable: {
+    paddingVertical: 8,
+    paddingHorizontal: 5,
+    marginBottom: 5,
+    alignSelf: 'flex-start',
+  },
+  backButton: {
+    color: Colors.light.primary,
+    fontSize: 16,
+    fontWeight: '600',
   },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#11181C', marginTop: 5 },
   headerSubtitle: { fontSize: 14, color: '#687076', marginTop: 5 },
