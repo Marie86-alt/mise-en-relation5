@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState, useMemo} from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView,
   Alert, Modal, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator,
-  useWindowDimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
@@ -29,10 +28,7 @@ export default function ConversationScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const flatListRef = useRef<FlatList<Message>>(null);
-  
-  // Détection des dimensions d'écran pour ajuster l'interface
-  const screenData = useWindowDimensions(); // { width, height, scale, fontScale }
-  const isSmallScreen = screenData.width < 380;
+
   // --- params stables (depuis la navigation)
   const rawParams = useLocalSearchParams();
   const getParam = (key: string): string => {
@@ -667,7 +663,6 @@ export default function ConversationScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { paddingBottom: Platform.OS === 'android' ? 15 : 0 }]}>
-      <View style={{ flex: 1, paddingHorizontal: isSmallScreen ? 10 : 16 }}></View>
       <View style={styles.header}>
         <TouchableOpacity onPress={retournerEnArriere}>
           <Text style={styles.backButton}>← Retour</Text>
@@ -822,7 +817,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
     padding: 20,
-    paddingTop: 15,
+    paddingTop: Platform.OS === 'android' ? 10 : 15,
   },
   backButton: { 
     color: Colors.light.primary, 
