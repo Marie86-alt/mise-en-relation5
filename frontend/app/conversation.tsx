@@ -1,9 +1,8 @@
 // app/conversation.tsx
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo} from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView,
   Alert, Modal, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator,
-  Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
@@ -12,6 +11,7 @@ import { Colors } from '@/constants/Colors';
 import { Timestamp } from 'firebase/firestore';
 import { PricingService, PricingResult } from '../src/utils/pricing';
 import { avisService } from '../src/services/firebase/avisService';
+import { useTheme } from '@/hooks/useTheme';
 
 type EtapeType = 'conversation' | 'attente_service' | 'evaluation' | 'avis_obligatoire';
 const ETAPES: Record<string, EtapeType> = {
@@ -28,18 +28,8 @@ const fmt = (n: number) => `${n.toFixed(2)}€`;
 export default function ConversationScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { theme } = useTheme();
   const flatListRef = useRef<FlatList<Message>>(null);
-  
-  // Détection des dimensions d'écran pour ajuster l'interface
-  const [screenData, setScreenData] = useState(Dimensions.get('window'));
-  
-  useEffect(() => {
-    const onChange = (result: any) => {
-      setScreenData(result.window);
-    };
-    const subscription = Dimensions.addEventListener('change', onChange);
-    return () => subscription?.remove();
-  }, []);
 
   // --- params stables (depuis la navigation)
   const rawParams = useLocalSearchParams();
@@ -483,7 +473,7 @@ export default function ConversationScreen() {
             Créneau actuel : {stableParams.heureDebut} - {stableParams.heureFin}
           </Text>
           <Text style={styles.errorHint}>
-            Veuillez sélectionner un créneau d'au moins 2 heures consécutives.
+            Veuillez sélectionner un créneau d&apos au moins 2 heures consécutives.
           </Text>
         </View>
       );
@@ -673,10 +663,217 @@ export default function ConversationScreen() {
     }
   };
 
+  // Styles dynamiques avec le thème
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+      marginBottom: Platform.OS === 'android' ? 0 : 0,
+    },
+    header: {
+      backgroundColor: theme.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+      padding: 20,
+      paddingTop: Platform.OS === 'android' ? 10 : 15,
+    },
+    backButtonTouchable: {
+      paddingVertical: 8,
+      paddingHorizontal: 5,
+      marginBottom: 5,
+      alignSelf: 'flex-start',
+    },
+    backButton: {
+      color: theme.primary,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    headerTitle: { fontSize: 20, fontWeight: 'bold', color: theme.text, marginTop: 5 },
+    headerSubtitle: { fontSize: 14, color: theme.textSecondary, marginTop: 5 },
+    headerPrice: { fontSize: 12, color: theme.primary, fontWeight: '600', marginTop: 3 },
+    headerSubPrice: { fontSize: 12, color: '#856404', fontWeight: '600', marginTop: 2 },
+    messagesList: { flex: 1, paddingHorizontal: 15, paddingVertical: 10 },
+    messageContainer: { padding: 12, marginVertical: 5, borderRadius: 18, maxWidth: '80%' },
+    messageClient: { alignSelf: 'flex-end', backgroundColor: theme.primary },
+    messageAidant: { alignSelf: 'flex-start', backgroundColor: theme.surface },
+    messageTexte: { fontSize: 16, lineHeight: 22, color: theme.text },
+    messageTexteClient: { color: '#ffffff' },
+    messageHeure: { fontSize: 12, color: theme.textSecondary, marginTop: 5, textAlign: 'right' },
+    messageHeureClient: { color: 'rgba(255,255,255,0.7)' },
+    tarificationContainer: {
+      backgroundColor: theme.surface,
+      borderColor: theme.border,
+      borderRadius: 12,
+      borderWidth: 1,
+      padding: 15,
+      margin: 15,
+    },
+    tarificationTitle: { fontSize: 16, fontWeight: 'bold', color: theme.text, marginBottom: 10 },
+    tarificationDetails: {},
+    tarificationRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 },
+    errorContainer: {
+      backgroundColor: '#fff5f5',
+      borderWidth: 1,
+      borderColor: '#fecaca',
+      borderRadius: 8,
+      padding: 16,
+      marginBottom: 16,
+    },
+    errorTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#dc2626',
+      marginBottom: 8,
+    },
+    errorMessage: {
+      fontSize: 14,
+      color: '#dc2626',
+      marginBottom: 8,
+    },
+    errorHint: {
+      fontSize: 13,
+      color: '#6b7280',
+      fontStyle: 'italic',
+    },
+    tarificationLabel: { fontSize: 14, color: theme.textSecondary },
+    tarificationValue: { fontSize: 14, fontWeight: '500', color: theme.text },
+    prixBarre: { textDecorationLine: 'line-through', color: theme.textSecondary },
+    reductionLabel: { fontSize: 14, color: '#28a745', fontWeight: '500' },
+    reductionValue: { fontSize: 14, color: '#28a745', fontWeight: 'bold' },
+    totalRow: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: theme.border },
+    totalLabel: { fontSize: 16, fontWeight: 'bold', color: theme.text },
+    totalValue: { fontSize: 16, fontWeight: 'bold', color: theme.primary },
+    economieText: { textAlign: 'center', marginTop: 8, fontSize: 12, color: '#28a745', fontWeight: '500' },
+    acompteDetails: { backgroundColor: '#fff3cd', padding: 15, borderRadius: 8, marginBottom: 15 },
+    acompteRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    acompteLabel: { fontSize: 14, color: '#856404' },
+    acompteValue: { fontSize: 14, fontWeight: '500', color: '#856404' },
+    acompteAmount: { fontSize: 16, fontWeight: 'bold', color: theme.primary },
+    inputContainer: {
+      flexDirection: 'row',
+      padding: 10,
+      backgroundColor: theme.surface,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+    },
+    textInput: {
+      flex: 1,
+      backgroundColor: theme.background,
+      borderRadius: 20,
+      paddingHorizontal: 15,
+      paddingVertical: 10,
+      marginRight: 10,
+      maxHeight: 100,
+      color: theme.text,
+    },
+    sendButton: {
+      backgroundColor: theme.primary,
+      borderRadius: 20,
+      width: 40,
+      height: 40,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    sendButtonText: { color: '#ffffff', fontSize: 20, fontWeight: 'bold' },
+    centeredContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+    loadingText: { marginTop: 10, fontSize: 16, color: theme.textSecondary },
+    attenteTitre: { fontSize: 22, fontWeight: 'bold', color: theme.text, textAlign: 'center', marginBottom: 20 },
+    attenteDescription: { fontSize: 16, color: theme.textSecondary, textAlign: 'center', marginBottom: 30, lineHeight: 24 },
+    adresseInput: {
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      padding: 15,
+      fontSize: 16,
+      color: theme.text,
+      marginBottom: 20,
+      minHeight: 100,
+      textAlignVertical: 'top',
+    },
+    confirmerButton: {
+      backgroundColor: theme.primary,
+      borderRadius: 8,
+      paddingVertical: 15,
+      alignItems: 'center',
+      marginBottom: 15,
+    },
+    buttonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
+    evaluationTitre: { fontSize: 22, fontWeight: 'bold', color: theme.text, textAlign: 'center', marginBottom: 10 },
+    evaluationDescription: { fontSize: 14, color: theme.textSecondary, textAlign: 'center', marginBottom: 30 },
+    etoilesContainer: { flexDirection: 'row', justifyContent: 'center', marginBottom: 30 },
+    etoile: { fontSize: 48, marginHorizontal: 8 },
+    etoileVide: { fontSize: 48, marginHorizontal: 8, color: '#ddd' },
+    confirmerEvaluationButton: {
+      backgroundColor: theme.primary,
+      borderRadius: 8,
+      paddingVertical: 15,
+      alignItems: 'center',
+    },
+    avisObligatoireTitre: { fontSize: 22, fontWeight: 'bold', color: theme.text, textAlign: 'center', marginBottom: 10 },
+    avisObligatoireDescription: { fontSize: 14, color: '#dc2626', textAlign: 'center', marginBottom: 20, fontStyle: 'italic' },
+    avisInput: {
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      padding: 15,
+      fontSize: 16,
+      color: theme.text,
+      marginBottom: 20,
+      minHeight: 120,
+      textAlignVertical: 'top',
+    },
+    confirmerAvisButton: {
+      backgroundColor: theme.primary,
+      borderRadius: 8,
+      paddingVertical: 15,
+      alignItems: 'center',
+    },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+    modalContent: { backgroundColor: theme.surface, borderRadius: 16, padding: 20, width: '100%', maxWidth: 400 },
+    modalTitle: { fontSize: 20, fontWeight: 'bold', color: theme.text, marginBottom: 15, textAlign: 'center' },
+    modalDescription: { fontSize: 16, color: theme.textSecondary, marginBottom: 20, textAlign: 'center', lineHeight: 24 },
+    modalButtons: { flexDirection: 'row', justifyContent: 'space-between' },
+    modalCancelButton: { flex: 1, borderRadius: 8, paddingVertical: 15, marginRight: 10, backgroundColor: theme.border, alignItems: 'center' },
+    modalConfirmButton: { flex: 1, borderRadius: 8, paddingVertical: 15, marginLeft: 10, backgroundColor: theme.primary, alignItems: 'center' },
+    modalCancelText: { color: theme.textSecondary, fontSize: 16, fontWeight: '500' },
+    modalConfirmText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
+    adresseConfirmee: { backgroundColor: theme.surface, padding: 15, borderRadius: 8, marginBottom: 20, width: '100%' },
+    adresseLabel: { fontSize: 14, fontWeight: '600', color: theme.textSecondary, marginBottom: 5 },
+    adresseTexte: { fontSize: 15, color: theme.text, lineHeight: 20 },
+    infoText: { fontSize: 13, color: theme.textSecondary, textAlign: 'center', marginTop: 10, fontStyle: 'italic' },
+    modalPricingSection: { backgroundColor: theme.background, padding: 15, borderRadius: 8, marginBottom: 15, borderWidth: 1, borderColor: theme.border },
+    modalPricingTitle: { fontSize: 16, fontWeight: 'bold', color: theme.text, marginBottom: 10 },
+    modalPricingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    modalPricingLabel: { fontSize: 14, color: theme.textSecondary },
+    modalPricingValue: { fontSize: 14, fontWeight: '500', color: theme.text },
+    modalCommissionSection: { backgroundColor: '#e8f4f8', padding: 15, borderRadius: 8, marginBottom: 15, borderWidth: 1, borderColor: '#b3d9e6' },
+    modalCommissionTitle: { fontSize: 16, fontWeight: 'bold', color: '#0c5d7a', marginBottom: 10 },
+    modalCommissionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    modalCommissionLabel: { fontSize: 14, color: '#0c5d7a', flex: 1 },
+    modalCommissionValue: { fontSize: 14, fontWeight: 'bold', color: theme.primary },
+    etoileButton: { padding: 5 },
+    etoilePleine: { color: '#ffd700' },
+    buttonDisabled: { opacity: 0.5 },
+    confirmerButtonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
+    buttonTextDisabled: { color: '#cccccc' },
+    messageInput: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 8, padding: 15, fontSize: 16, color: theme.text, marginBottom: 15, minHeight: 80, textAlignVertical: 'top' },
+    etapeTitle: { fontSize: 22, fontWeight: 'bold', color: theme.text, textAlign: 'center', marginBottom: 15 },
+    etapeDescription: { fontSize: 16, color: theme.textSecondary, textAlign: 'center', marginBottom: 25, lineHeight: 24 },
+    terminerButton: { backgroundColor: '#28a745', borderRadius: 8, paddingVertical: 15, alignItems: 'center', marginBottom: 15 },
+    evaluerButton: { backgroundColor: theme.primary, borderRadius: 8, paddingVertical: 15, alignItems: 'center' },
+    avisContainer: { backgroundColor: theme.surface, padding: 20, borderRadius: 12, borderWidth: 1, borderColor: theme.border },
+  }), [theme]);
+
   return (
     <SafeAreaView style={[styles.container, { paddingBottom: Platform.OS === 'android' ? 15 : 0 }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={retournerEnArriere}>
+        <TouchableOpacity
+          onPress={retournerEnArriere}
+          style={styles.backButtonTouchable}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <Text style={styles.backButton}>← Retour</Text>
         </TouchableOpacity>
 
@@ -818,207 +1015,3 @@ export default function ConversationScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: Colors.light.background,
-    marginBottom: Platform.OS === 'android' ? 0 : 0, // Marge en bas si nécessaire
-  },
-  header: {
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    padding: 20,
-    paddingTop: 15,
-  },
-  backButton: { 
-    color: Colors.light.primary, 
-    fontSize: 16, 
-    fontWeight: '500',
-    marginBottom: 10,
-    paddingVertical: 5,
-  },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#11181C', marginTop: 5 },
-  headerSubtitle: { fontSize: 14, color: '#687076', marginTop: 5 },
-  headerPrice: { fontSize: 12, color: Colors.light.primary, fontWeight: '600', marginTop: 3 },
-  headerSubPrice: { fontSize: 12, color: '#856404', fontWeight: '600', marginTop: 2 },
-
-  messagesList: { flex: 1, paddingHorizontal: 15, paddingVertical: 10 },
-  messageContainer: { padding: 12, marginVertical: 5, borderRadius: 18, maxWidth: '80%' },
-  messageClient: { alignSelf: 'flex-end', backgroundColor: Colors.light.primary },
-  messageAidant: { alignSelf: 'flex-start', backgroundColor: '#f0f2f5' },
-  messageTexte: { fontSize: 16, lineHeight: 22, color: '#11181C' },
-  messageTexteClient: { color: '#ffffff' },
-  messageHeure: { fontSize: 12, color: '#687076', marginTop: 5, textAlign: 'right' },
-  messageHeureClient: { color: 'rgba(255,255,255,0.7)' },
-
-  tarificationContainer: {
-    backgroundColor: '#f8f9fa',
-    borderColor: '#e9ecef',
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 15,
-    margin: 15,
-  },
-  tarificationTitle: { fontSize: 16, fontWeight: 'bold', color: '#212529', marginBottom: 10 },
-  tarificationDetails: {},
-  tarificationRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 },
-  
-  // Styles pour l'erreur de tarification
-  errorContainer: {
-    backgroundColor: '#fff5f5',
-    borderWidth: 1,
-    borderColor: '#fecaca',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-  },
-  errorTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#dc2626',
-    marginBottom: 8,
-  },
-  errorMessage: {
-    fontSize: 14,
-    color: '#dc2626',
-    marginBottom: 8,
-  },
-  errorHint: {
-    fontSize: 13,
-    color: '#6b7280',
-    fontStyle: 'italic',
-  },
-  tarificationLabel: { fontSize: 14, color: '#495057' },
-  tarificationValue: { fontSize: 14, fontWeight: '500', color: '#212529' },
-  prixBarre: { textDecorationLine: 'line-through', color: '#6c757d' },
-  reductionLabel: { fontSize: 14, color: '#28a745', fontWeight: '500' },
-  reductionValue: { fontSize: 14, color: '#28a745', fontWeight: 'bold' },
-  totalRow: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#dee2e6' },
-  totalLabel: { fontSize: 16, fontWeight: 'bold', color: '#212529' },
-  totalValue: { fontSize: 16, fontWeight: 'bold', color: Colors.light.primary },
-  economieText: { textAlign: 'center', marginTop: 8, fontSize: 12, color: '#28a745', fontWeight: '500' },
-
-  acompteDetails: { backgroundColor: '#fff3cd', padding: 15, borderRadius: 8, marginBottom: 15 },
-  acompteRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  acompteLabel: { fontSize: 14, color: '#856404' },
-  acompteValue: { fontSize: 14, fontWeight: '500', color: '#856404' },
-  acompteAmount: { fontSize: 16, fontWeight: 'bold', color: Colors.light.primary },
-
-  inputContainer: {
-    flexDirection: 'row',
-    padding: 10,
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    alignItems: 'flex-end', // Alignement en bas pour éviter le chevauchement
-    color: '#11181C',
-    paddingBottom: Platform.OS === 'android' ? 20 : 10, // Plus d'espace en bas sur Android
-    minHeight: 70, // Hauteur minimum augmentée
-    marginBottom: Platform.OS === 'android' ? 10 : 0, // Marge de sécurité supplémentaire
-  },
-  messageInput: {
-    flex: 1,
-    borderRadius: 20,
-    borderWidth: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderColor: '#e0e0e0',
-    marginRight: 10,
-    backgroundColor: '#f8f9fa',
-    fontSize: 16,
-    color: '#11181C',
-  },
-  sendButton: {
-    backgroundColor: Colors.light.primary,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sendButtonText: { color: '#ffffff', fontSize: 18 },
-
-  centeredContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  etapeTitle: { fontSize: 24, fontWeight: 'bold', color: Colors.light.primary, textAlign: 'center', marginBottom: 15 },
-  etapeDescription: { fontSize: 16, lineHeight: 24, color: '#687076', textAlign: 'center', marginBottom: 30 },
-
-  evaluerButton: { backgroundColor: Colors.light.primary, borderRadius: 8, paddingVertical: 15, paddingHorizontal: 30 },
-  confirmerButton: { backgroundColor: Colors.light.primary, borderRadius: 8, paddingVertical: 15, paddingHorizontal: 24, margin: 15, alignItems: 'center' },
-  confirmerButtonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
-  buttonDisabled: { backgroundColor: '#e5e7eb' },
-  buttonTextDisabled: { color: '#9ca3af' },
-  terminerButton: { backgroundColor: Colors.light.success, borderRadius: 8, paddingVertical: 15, paddingHorizontal: 30, marginBottom: 20 },
-
-  buttonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
-  loadingText: { fontSize: 16, color: Colors.light.primary, marginTop: 20 },
-
-  etoilesContainer: { flexDirection: 'row', justifyContent: 'center', marginVertical: 20 },
-  etoileButton: { padding: 5 },
-  etoile: { fontSize: 40 },
-  etoilePleine: { color: Colors.light.primary },
-  etoileVide: { color: '#e0e0e0' },
-
-  avisContainer: { flexGrow: 1, justifyContent: 'center', padding: 20 },
-  avisInput: {
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-    borderColor: '#e0e0e0',
-    marginVertical: 20,
-    textAlignVertical: 'top',
-    backgroundColor: '#f8f9fa',
-    fontSize: 16,
-    minHeight: 120,
-    color: '#11181C',
-  },
-  confirmerAvisButton: { backgroundColor: Colors.light.primary, borderRadius: 8, paddingVertical: 15, paddingHorizontal: 24, alignItems: 'center' },
-
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { backgroundColor: '#ffffff', borderRadius: 12, padding: 20, width: '90%', maxWidth: 400 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#11181C', textAlign: 'center', marginBottom: 15 },
-  modalDescription: { fontSize: 16, lineHeight: 22, color: '#687076', textAlign: 'center', marginBottom: 20 },
-
-  modalPricingSection: { backgroundColor: '#f8f9fa', padding: 12, borderRadius: 8, marginBottom: 15 },
-  modalPricingTitle: { fontSize: 14, fontWeight: 'bold', color: '#212529', marginBottom: 8 },
-  modalPricingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  modalPricingLabel: { fontSize: 13, color: '#495057' },
-  modalPricingValue: { fontSize: 13, fontWeight: '500', color: '#212529' },
-
-  // section commission
-  modalCommissionSection: {
-    backgroundColor: '#fff8f0',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#ffd4a3',
-  },
-  modalCommissionTitle: { fontSize: 13, fontWeight: '600', color: '#2c3e50', marginBottom: 8 },
-  modalCommissionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  modalCommissionLabel: { fontSize: 12, color: '#495057', flex: 1 },
-  modalCommissionValue: { fontSize: 13, fontWeight: '600', color: Colors.light.primary },
-
-  adresseInput: {
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-    borderColor: '#e0e0e0',
-    marginBottom: 20,
-    fontSize: 16,
-    color: '#11181C',
-  },
-
-  modalButtons: { flexDirection: 'row', justifyContent: 'space-between' },
-  modalCancelButton: { flex: 1, borderRadius: 8, paddingVertical: 15, marginRight: 10, backgroundColor: '#f0f2f5', alignItems: 'center' },
-  modalConfirmButton: { flex: 1, borderRadius: 8, paddingVertical: 15, marginLeft: 10, backgroundColor: Colors.light.primary, alignItems: 'center' },
-  modalCancelText: { color: '#687076', fontSize: 16, fontWeight: '500' },
-  modalConfirmText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
-
-  adresseConfirmee: { backgroundColor: '#f8f9fa', padding: 15, borderRadius: 8, marginBottom: 20, width: '100%' },
-  adresseLabel: { fontSize: 14, fontWeight: '600', color: '#495057', marginBottom: 5 },
-  adresseTexte: { fontSize: 15, color: '#212529', lineHeight: 20 },
-  infoText: { fontSize: 13, color: '#6c757d', textAlign: 'center', marginTop: 10, fontStyle: 'italic' },
-});

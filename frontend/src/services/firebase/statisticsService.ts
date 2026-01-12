@@ -2,7 +2,6 @@ import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore
 import { db } from '@/firebase.config';
 import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 
-
 // Types simples (souples)
 interface UserData {
   id: string;
@@ -13,9 +12,6 @@ interface UserData {
   isSuspended?: boolean;
   isDeleted?: boolean;
   secteur?: string;
-  tarifHeure?: number;
-  averageRating?: number;
-  totalReviews?: number;
   createdAt?: any;
   [key: string]: any;
 }
@@ -24,8 +20,8 @@ interface ServiceData {
   aidantId?: string;
   clientId?: string;
   secteur?: string;
-  montant?: number;     // € (côté app)
-  status?: string;      // 'acompte_paye' | 'paiement_complet' | 'termine' | ...
+  montant?: number; // €
+  status?: string;
   createdAt?: any;
   completedAt?: any;
   [key: string]: any;
@@ -44,19 +40,20 @@ interface ConversationData {
 }
 interface TransactionData {
   id: string;
-  amount?: number;      // cents ou €
-  montant?: number;     // € (autre source possible)
-  commission?: number;  // €
-  type?: string;        // 'deposit' | 'final' | 'final_payment'
-  status?: string;      // 'pending' | 'completed' | 'succeeded'
+  amount?: number; // cents ou €
+  montant?: number; // €
+  commission?: number; // €
+  type?: string; // 'acompte' | 'final' | 'final_payment' | ...
+  status?: string; // 'pending' | 'completed' | 'succeeded'
   createdAt?: any;
   [key: string]: any;
 }
 
 const MONTHS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
-const SERVICE_DONE = new Set(['termine','evalue','paiement_complet']);
-const SERVICE_INPROGRESS = new Set(['en_cours','acompte_paye','a_venir']);
-const SERVICE_CANCELED = new Set(['annule','cancelled']);
+
+const SERVICE_DONE = new Set(['termine', 'evalue', 'paiement_complet']);
+const SERVICE_INPROGRESS = new Set(['en_cours', 'acompte_paye', 'a_venir']);
+const SERVICE_CANCELED = new Set(['annule', 'cancelled']);
 
 function toJSDate(ts: any): Date | null {
   try {
@@ -72,42 +69,94 @@ function toJSDate(ts: any): Date | null {
     return null;
   }
 }
+
 const r2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
 const r1 = (n: number) => Math.round((Number(n) || 0) * 10) / 10;
 const r0 = (n: number) => Math.round(Number(n) || 0);
 
-export const statisticsService = {
-  calculateStats: async () => {
-    console.log('📊 Calcul des statistiques RÉELLES depuis Firebase...');
+const isTxCompleted = (t: TransactionData) => {
+  const st = String(t.status || '').toLowerCase();
+  return st === 'completed' || st === 'succeeded';
+};
 
-    // Charge tout (simple et efficace pour démarrer)
-    const [usersSnap, servicesSnap, avisSnap, conversationsSnap, transactionsSnap] = await Promise.all([
-      getDocs(collection(db, 'users')),
-      getDocs(collection(db, 'services')).catch(() => ({ docs: [] } as any)),
-      getDocs(collection(db, 'avis')).catch(() => ({ docs: [] } as any)),
-      getDocs(collection(db, 'conversations')).catch(() => ({ docs: [] } as any)),
-      getDocs(collection(db, 'transactions')).catch(() => ({ docs: [] } as any)),
-    ]);
+const txAmount = (t: TransactionData) => {
+  const v = Number(t.amount ?? t.montant ?? 0);
+  return Number.isFinite(v) ? v : 0;
+};
+
+const isFinalTx = (t: TransactionData) => {
+  const typ = String(t.type || '').toLowerCase();
+  return typ === 'final' || typ === 'final_payment';
+};
+
+export type AdminStats = {
+  // Ops
+  totalAidants: number;
+  totalClients: number;
+  aidantsVerifies: number;
+  aidantsEnAttente: number;
+  comptesSuspendus: number;
+  nouveauxUtilisateurs: number;
+
+  servicesRealises: number;
+  servicesEnCours: number;
+  servicesAnnules: number;
+  tauxFinalisation: number; // % (terminés / (terminés + annulés))
+
+  // Business
+  chiffreAffaires: number;     // €
+  commissionPerçue: number;    // €
+  panierMoyen: number;         // €
+
+  // Qualité
+  evaluationMoyenne: number;   // /5
+  totalAvis: number;
+
+  // Modération (optionnel)
+  conversationsActives: number;
+
+  // Secteurs (clair)
+  topSecteursParRevenus: { secteur: string; revenue: number; services: number }[];
+  topSecteursParAidants: { secteur: string; count: number }[];
+
+  // Evolution
+  evolutionMensuelle: { mois: string; services: number; revenue: number }[];
+
+  lastUpdate: string;
+};
+
+export const statisticsService = {
+  calculateStats: async (): Promise<AdminStats> => {
+    console.log('📊 Calcul des stats depuis Firebase...');
+
+    const [usersSnap, servicesSnap, avisSnap, conversationsSnap, transactionsSnap] =
+      await Promise.all([
+        getDocs(collection(db, 'users')),
+        getDocs(collection(db, 'services')).catch(() => ({ docs: [] } as any)),
+        getDocs(collection(db, 'avis')).catch(() => ({ docs: [] } as any)),
+        getDocs(collection(db, 'conversations')).catch(() => ({ docs: [] } as any)),
+        getDocs(collection(db, 'transactions')).catch(() => ({ docs: [] } as any)),
+      ]);
 
     const users = usersSnap.docs.map(
-  (d: QueryDocumentSnapshot<DocumentData>) => ({ id: d.id, ...(d.data() as any) })
-) as UserData[];
+      (d: QueryDocumentSnapshot<DocumentData>) => ({ id: d.id, ...(d.data() as any) })
+    ) as UserData[];
 
-const services = servicesSnap.docs.map(
-  (d: QueryDocumentSnapshot<DocumentData>) => ({ id: d.id, ...(d.data() as any) })
-) as ServiceData[];
+    const services = servicesSnap.docs.map(
+      (d: QueryDocumentSnapshot<DocumentData>) => ({ id: d.id, ...(d.data() as any) })
+    ) as ServiceData[];
 
-const avis = avisSnap.docs.map(
-  (d: QueryDocumentSnapshot<DocumentData>) => ({ id: d.id, ...(d.data() as any) })
-) as AvisData[];
+    const avis = avisSnap.docs.map(
+      (d: QueryDocumentSnapshot<DocumentData>) => ({ id: d.id, ...(d.data() as any) })
+    ) as AvisData[];
 
-const conversations = conversationsSnap.docs.map(
-  (d: QueryDocumentSnapshot<DocumentData>) => ({ id: d.id, ...(d.data() as any) })
-) as ConversationData[];
+    const conversations = conversationsSnap.docs.map(
+      (d: QueryDocumentSnapshot<DocumentData>) => ({ id: d.id, ...(d.data() as any) })
+    ) as ConversationData[];
 
-const transactions = transactionsSnap.docs.map(
-  (d: QueryDocumentSnapshot<DocumentData>) => ({ id: d.id, ...(d.data() as any) })
-) as TransactionData[];
+    const transactions = transactionsSnap.docs.map(
+      (d: QueryDocumentSnapshot<DocumentData>) => ({ id: d.id, ...(d.data() as any) })
+    ) as TransactionData[];
 
     // 👥 Utilisateurs
     const activeUsers = users.filter(u => !u.isDeleted);
@@ -117,70 +166,78 @@ const transactions = transactionsSnap.docs.map(
     const aidantsEnAttente = aidants.filter(a => !a.isVerified);
     const comptesSuspendus = activeUsers.filter(u => !!u.isSuspended);
 
-    // 🧾 Services par statut (normalisés en lower-case)
+    // 📅 Nouveaux utilisateurs ce mois
+    const today = new Date();
+    const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const nouveauxUtilisateurs = activeUsers.filter(u => {
+      const d = toJSDate(u.createdAt);
+      return d ? d >= thisMonthStart : false;
+    }).length;
+
+    // 🧾 Services par statut
     const servicesTermines = services.filter(s => SERVICE_DONE.has(String(s.status || '').toLowerCase()));
     const servicesEnCours = services.filter(s => SERVICE_INPROGRESS.has(String(s.status || '').toLowerCase()));
     const servicesAnnules = services.filter(s => SERVICE_CANCELED.has(String(s.status || '').toLowerCase()));
 
-    // 💳 Transactions (gère 'amount' ou 'montant', 'final' ou 'final_payment', 'completed' ou 'succeeded')
-    const txCompleted = transactions.filter(t => {
-      const status = String(t.status || '').toLowerCase();
-      return status === 'completed' || status === 'succeeded';
-    });
-    const txFinalOnly = txCompleted.filter(t => {
-      const typ = String(t.type || '').toLowerCase();
-      return typ === 'final' || typ === 'final_payment';
-    });
-    const txAmount = (t: TransactionData) => {
-      const v = Number(t.amount ?? t.montant ?? 0);
-      return Number.isFinite(v) ? v : 0;
-    };
+    const servicesRealises = servicesTermines.length;
 
-    // 💰 Chiffre d’affaires & commissions
-    const fromTx = txFinalOnly.reduce((sum, t) => sum + txAmount(t), 0);
-    let chiffreAffaires = fromTx > 0
-      ? r2(fromTx)
+    // ✅ Taux de finalisation (plus logique que "conversion")
+    const denomFinalisation = servicesTermines.length + servicesAnnules.length;
+    const tauxFinalisation = r0(denomFinalisation ? (servicesTermines.length / denomFinalisation) * 100 : 0);
+
+    // 💳 Transactions finalisées
+    const txCompleted = transactions.filter(isTxCompleted);
+    const txFinalOnly = txCompleted.filter(isFinalTx);
+
+    // 💰 CA & commission (priorité transactions final, sinon fallback services terminés)
+    const caFromTx = txFinalOnly.reduce((sum, t) => sum + txAmount(t), 0);
+    const chiffreAffaires = caFromTx > 0
+      ? r2(caFromTx)
       : r2(servicesTermines.reduce((sum, s) => sum + Number(s.montant || 0), 0));
 
-    let commissionPerçue = txFinalOnly.length
+    const commissionPerçue = txFinalOnly.length
       ? r2(txFinalOnly.reduce((sum, t) => sum + Number(t.commission ?? txAmount(t) * 0.4), 0))
       : r2(chiffreAffaires * 0.4);
 
-    const servicesRealises = servicesTermines.length;
     const panierMoyen = r2(servicesRealises ? chiffreAffaires / servicesRealises : 0);
 
     // ⭐ Qualité
-    const notes = avis.map(a => Number(a.rating || 0)).filter(n => Number.isFinite(n));
+    const notes = avis.map(a => Number(a.rating || 0)).filter(n => Number.isFinite(n) && n > 0);
     const evaluationMoyenne = r1(notes.length ? notes.reduce((s, n) => s + n, 0) / notes.length : 0);
 
-    // 💬 Activité
+    // 💬 Conversations actives
     const conversationsActives = conversations.filter(c => {
       const st = String(c.status || 'conversation').toLowerCase();
       return st !== 'termine' && st !== 'annule' && st !== 'cancelled';
     }).length;
 
-    // 📍 Secteurs populaires (aidants + revenus des services terminés)
-    const secteurMap = new Map<string, { count: number; revenue: number; services: number }>();
-    aidants.forEach(a => {
-      const key = a.secteur || 'Non spécifié';
-      const curr = secteurMap.get(key) ?? { count: 0, revenue: 0, services: 0 };
-      curr.count += 1;
-      secteurMap.set(key, curr);
-    });
+    // 📍 TOP secteurs par revenus + par aidants
+    const revenueBySecteur = new Map<string, { revenue: number; services: number }>();
     servicesTermines.forEach(s => {
       const key = s.secteur || 'Non spécifié';
-      const curr = secteurMap.get(key) ?? { count: 0, revenue: 0, services: 0 };
+      const curr = revenueBySecteur.get(key) ?? { revenue: 0, services: 0 };
       curr.revenue += Number(s.montant || 0);
       curr.services += 1;
-      secteurMap.set(key, curr);
+      revenueBySecteur.set(key, curr);
     });
-    const secteursPopulaires = Array.from(secteurMap.entries())
-      .map(([secteur, v]) => ({ secteur, count: v.count, revenue: r0(v.revenue), services: v.services }))
+
+    const topSecteursParRevenus = Array.from(revenueBySecteur.entries())
+      .map(([secteur, v]) => ({ secteur, revenue: r0(v.revenue), services: v.services }))
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 5);
 
-    // 📈 Évolution mensuelle (6 derniers mois)
-    const today = new Date();
+    const aidantsBySecteur = new Map<string, number>();
+    aidants.forEach(a => {
+      const key = a.secteur || 'Non spécifié';
+      aidantsBySecteur.set(key, (aidantsBySecteur.get(key) ?? 0) + 1);
+    });
+
+    const topSecteursParAidants = Array.from(aidantsBySecteur.entries())
+      .map(([secteur, count]) => ({ secteur, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    // 📈 Évolution mensuelle (6 derniers mois) basée sur services terminés
     const evolutionMensuelle: { mois: string; services: number; revenue: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
@@ -191,7 +248,9 @@ const transactions = transactionsSnap.docs.map(
         const when = toJSDate(s.completedAt ?? s.createdAt);
         return when ? when >= start && when <= end : false;
       });
+
       const monthRevenue = monthServices.reduce((sum, s) => sum + Number(s.montant || 0), 0);
+
       evolutionMensuelle.push({
         mois: `${MONTHS[d.getMonth()]} ${d.getFullYear()}`,
         services: monthServices.length,
@@ -199,15 +258,7 @@ const transactions = transactionsSnap.docs.map(
       });
     }
 
-    // 🔢 Taux conversion + nouveaux utilisateurs du mois
-    const tauxConversion = r0(services.length ? (servicesRealises / services.length) * 100 : 0);
-    const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    const nouveauxUtilisateurs = activeUsers.filter(u => {
-      const d = toJSDate(u.createdAt);
-      return d ? d >= thisMonthStart : false;
-    }).length;
-
-    const finalStats = {
+    const finalStats: AdminStats = {
       totalAidants: aidants.length,
       totalClients: clients.length,
       aidantsVerifies: aidantsVerifies.length,
@@ -218,7 +269,7 @@ const transactions = transactionsSnap.docs.map(
       servicesRealises,
       servicesEnCours: servicesEnCours.length,
       servicesAnnules: servicesAnnules.length,
-      tauxConversion,
+      tauxFinalisation,
 
       chiffreAffaires,
       commissionPerçue,
@@ -228,34 +279,31 @@ const transactions = transactionsSnap.docs.map(
       totalAvis: avis.length,
 
       conversationsActives,
-      secteursPopulaires,
+
+      topSecteursParRevenus,
+      topSecteursParAidants,
+
       evolutionMensuelle,
-      // 📊 Nouvelles métriques ajoutées
-      tauxSatisfactionGlobal: r1(evaluationMoyenne), // Note sur 5 convertie en pourcentage
-      evolutionRevenus: evolutionMensuelle.map(m => ({ 
-        mois: m.mois, 
-        revenus: m.revenue 
-      })),
 
       lastUpdate: new Date().toISOString(),
     };
 
-    console.log('✅ Statistiques RÉELLES calculées:', finalStats);
+    console.log('✅ Stats calculées:', finalStats);
     return finalStats;
   },
 
-  // Stats d'une période donnée (gardées)
+  // Stats d'une période donnée (tu peux garder)
   getStatsByPeriod: async (startDate: Date, endDate: Date) => {
     const servicesQuery = query(
       collection(db, 'services'),
       where('createdAt', '>=', Timestamp.fromDate(startDate)),
       where('createdAt', '<=', Timestamp.fromDate(endDate))
     );
+
     const servicesSnap = await getDocs(servicesQuery);
     const services = servicesSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as ServiceData[];
-    const servicesTermines = services.filter(s =>
-      SERVICE_DONE.has(String(s.status || '').toLowerCase())
-    );
+
+    const servicesTermines = services.filter(s => SERVICE_DONE.has(String(s.status || '').toLowerCase()));
     const revenue = servicesTermines.reduce((sum, s) => sum + Number(s.montant || 0), 0);
 
     return {

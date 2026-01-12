@@ -1,6 +1,6 @@
 // Fichier: app/(tabs)/index.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,10 +17,12 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { Colors } from '@/constants/Colors';
 import { validateDate, validateTime, formatTimeToFrench, convertTimeToMinutes } from '../../src/utils/dateValidation';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function HomeScreen() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const { theme } = useTheme();
 
   const [secteur, setSecteur] = useState('');
   const [jour, setJour] = useState('');
@@ -208,6 +210,195 @@ const handleJourChange = (text: string) => {
     ]);
   };
 
+  // Styles dynamiques basés sur le thème
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.background },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.background
+    },
+    header: {
+      backgroundColor: theme.surface,
+      paddingTop: 60,
+      paddingBottom: 30,
+      paddingHorizontal: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    headerTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20
+    },
+    userInfo: { flex: 1 },
+    welcomeText: { fontSize: 16, color: theme.textSecondary },
+    userName: { fontSize: 20, fontWeight: 'bold', color: theme.text },
+    logoutButton: {
+      backgroundColor: theme.background,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.border
+    },
+    logoutButtonText: { color: Colors.light.danger, fontSize: 14, fontWeight: '500' },
+    title: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      color: Colors.light.primary,
+      marginBottom: 8,
+      textAlign: 'center'
+    },
+    subtitle: { fontSize: 16, color: theme.textSecondary, textAlign: 'center' },
+    form: { padding: 20 },
+    inputGroup: { marginBottom: 20 },
+    label: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.text,
+      marginBottom: 10
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      paddingHorizontal: 15,
+      paddingVertical: 12,
+      fontSize: 16,
+      backgroundColor: theme.surface,
+      color: theme.text
+    },
+    inputError: {
+      borderColor: '#ff4444',
+      borderWidth: 2,
+    },
+    errorText: {
+      color: '#ff4444',
+      fontSize: 12,
+      marginTop: 4,
+    },
+    errorTextSmall: {
+      color: '#ff4444',
+      fontSize: 10,
+      marginTop: 2,
+    },
+    hintText: {
+      color: theme.textSecondary,
+      fontSize: 12,
+      marginTop: 4,
+      fontStyle: 'italic',
+    },
+    selectorButton: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      paddingHorizontal: 15,
+      paddingVertical: 12,
+      backgroundColor: theme.surface,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    },
+    selectorButtonText: { fontSize: 16, color: theme.text },
+    placeholderText: { color: theme.textSecondary },
+    selectorArrow: { fontSize: 12, color: theme.textSecondary },
+    timeContainer: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 10
+    },
+    timeInputContainer: {
+      flex: 1,
+    },
+    timeInput: {
+      flex: 1
+    },
+    timeText: {
+      fontSize: 16,
+      color: theme.textSecondary,
+      fontWeight: '500',
+      marginTop: 12,
+    },
+    checkboxRow: {
+      flexDirection: 'row',
+      gap: 15,
+      flexWrap: 'wrap',
+    },
+    checkboxContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 5
+    },
+    checkbox: {
+      width: 24,
+      height: 24,
+      borderWidth: 2,
+      borderColor: theme.border,
+      borderRadius: 4,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.surface
+    },
+    checkboxSelected: {
+      backgroundColor: Colors.light.primary,
+      borderColor: Colors.light.primary
+    },
+    checkboxText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
+    checkboxLabel: { fontSize: 16, color: theme.text },
+    submitButton: {
+      backgroundColor: Colors.light.primary,
+      paddingVertical: 15,
+      borderRadius: 8,
+      alignItems: 'center',
+      marginTop: 10
+    },
+    submitButtonText: { color: '#ffffff', fontSize: 18, fontWeight: 'bold' },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end'
+    },
+    modalContainer: {
+      backgroundColor: theme.surface,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      maxHeight: '70%'
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border
+    },
+    modalTitle: { fontSize: 18, fontWeight: 'bold', color: theme.text },
+    modalCloseButton: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: theme.background,
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    modalCloseText: { fontSize: 16, color: theme.textSecondary },
+    modalOption: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingVertical: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border
+    },
+    modalOptionText: { fontSize: 16, color: theme.text },
+    checkmark: { fontSize: 18, color: Colors.light.success, fontWeight: 'bold' },
+  }), [theme]);
+
   const CheckBox = ({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void; }) => (
     <TouchableOpacity style={styles.checkboxContainer} onPress={onPress}>
       <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
@@ -264,14 +455,14 @@ const handleJourChange = (text: string) => {
         {/* Date avec validation */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>🗓️ Date du service *</Text>
-          <TextInput 
+          <TextInput
             style={[
-              styles.input, 
+              styles.input,
               jourError ? styles.inputError : {}
-            ]} 
+            ]}
             placeholder="JJ/MM/AAAA (ex: 15/08/2025)"
-            placeholderTextColor="#9CA3AF"
-            value={jour} 
+            placeholderTextColor={theme.textSecondary}
+            value={jour}
             onChangeText={handleJourChange}
             keyboardType="numeric"
             maxLength={10}
@@ -290,15 +481,15 @@ const handleJourChange = (text: string) => {
           <Text style={styles.label}>⏱️ Horaires *</Text>
           <View style={styles.timeContainer}>
             <View style={styles.timeInputContainer}>
-              <TextInput 
+              <TextInput
                 style={[
-                  styles.input, 
+                  styles.input,
                   styles.timeInput,
                   heureDebutError ? styles.inputError : {}
-                ]} 
+                ]}
                 placeholder="10h00"
-                placeholderTextColor="#9CA3AF"
-                value={heureDebut} 
+                placeholderTextColor={theme.textSecondary}
+                value={heureDebut}
                 onChangeText={handleHeureDebutChange}
                 onBlur={handleHeureDebutBlur}
                 keyboardType="numeric"
@@ -308,19 +499,19 @@ const handleJourChange = (text: string) => {
                 <Text style={styles.errorTextSmall}>{heureDebutError}</Text>
               ) : null}
             </View>
-            
+
             <Text style={styles.timeText}>à</Text>
-            
+
             <View style={styles.timeInputContainer}>
-              <TextInput 
+              <TextInput
                 style={[
-                  styles.input, 
+                  styles.input,
                   styles.timeInput,
                   heureFinError ? styles.inputError : {}
-                ]} 
+                ]}
                 placeholder="18h00"
-                placeholderTextColor="#9CA3AF"
-                value={heureFin} 
+                placeholderTextColor={theme.textSecondary}
+                value={heureFin}
                 onChangeText={handleHeureFinChange}
                 onBlur={handleHeureFinBlur}
                 keyboardType="numeric"
@@ -425,185 +616,3 @@ const handleJourChange = (text: string) => {
     </ScrollView>
   );
 }
-
-// --- STYLES MISE À JOUR ---
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    backgroundColor: '#ffffff',
-    paddingTop: 60,
-    paddingBottom: 30,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginBottom: 20 
-  },
-  userInfo: { flex: 1 },
-  welcomeText: { fontSize: 16, color: '#6c757d' },
-  userName: { fontSize: 20, fontWeight: 'bold', color: '#11181C' },
-  logoutButton: { 
-    backgroundColor: '#f0f2f5', 
-    paddingHorizontal: 12, 
-    paddingVertical: 8, 
-    borderRadius: 8 
-  },
-  logoutButtonText: { color: Colors.light.danger, fontSize: 14, fontWeight: '500' },
-  title: { 
-    fontSize: 28, 
-    fontWeight: 'bold', 
-    color: Colors.light.primary, 
-    marginBottom: 8, 
-    textAlign: 'center' 
-  },
-  subtitle: { fontSize: 16, color: '#6c757d', textAlign: 'center' },
-  form: { padding: 20 },
-  inputGroup: { marginBottom: 20 },
-  label: { 
-    fontSize: 16, 
-    fontWeight: '600', 
-    color: '#2c3e50', 
-    marginBottom: 10 
-  },
-  input: { 
-    borderWidth: 1, 
-    borderColor: '#dee2e6', 
-    borderRadius: 8, 
-    paddingHorizontal: 15, 
-    paddingVertical: 12, 
-    fontSize: 16, 
-    backgroundColor: '#ffffff',
-    color: '#11181C'
-  },
-  inputError: {
-    borderColor: '#ff4444',
-    borderWidth: 2,
-  },
-  errorText: {
-    color: '#ff4444',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  errorTextSmall: {
-    color: '#ff4444',
-    fontSize: 10,
-    marginTop: 2,
-  },
-  hintText: {
-    color: '#6c757d',
-    fontSize: 12,
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
-  selectorButton: { 
-    borderWidth: 1, 
-    borderColor: '#dee2e6', 
-    borderRadius: 8, 
-    paddingHorizontal: 15, 
-    paddingVertical: 12, 
-    backgroundColor: '#ffffff', 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center' 
-  },
-  selectorButtonText: { fontSize: 16, color: '#2c3e50' },
-  placeholderText: { color: '#6c757d' },
-  selectorArrow: { fontSize: 12, color: '#6c757d' },
-  timeContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'flex-start', 
-    gap: 10 
-  },
-  timeInputContainer: {
-    flex: 1,
-  },
-  timeInput: { 
-    flex: 1 
-  },
-  timeText: { 
-    fontSize: 16, 
-    color: '#6c757d', 
-    fontWeight: '500',
-    marginTop: 12, // Aligne avec les inputs
-  },
-  checkboxRow: {
-    flexDirection: 'row',
-    gap: 15,
-    flexWrap: 'wrap',
-  },
-  checkboxContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 8, 
-    marginBottom: 5 
-  },
-  checkbox: { 
-    width: 24, 
-    height: 24, 
-    borderWidth: 2, 
-    borderColor: '#dee2e6', 
-    borderRadius: 4, 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    backgroundColor: '#ffffff' 
-  },
-  checkboxSelected: { 
-    backgroundColor: Colors.light.primary, 
-    borderColor: Colors.light.primary 
-  },
-  checkboxText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
-  checkboxLabel: { fontSize: 16, color: '#2c3e50' },
-  submitButton: { 
-    backgroundColor: Colors.light.primary, 
-    paddingVertical: 15, 
-    borderRadius: 8, 
-    alignItems: 'center', 
-    marginTop: 10 
-  },
-  submitButtonText: { color: '#ffffff', fontSize: 18, fontWeight: 'bold' },
-  modalOverlay: { 
-    flex: 1, 
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
-    justifyContent: 'flex-end' 
-  },
-  modalContainer: { 
-    backgroundColor: '#ffffff', 
-    borderTopLeftRadius: 20, 
-    borderTopRightRadius: 20, 
-    maxHeight: '70%' 
-  },
-  modalHeader: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    padding: 20, 
-    borderBottomWidth: 1, 
-    borderBottomColor: '#dee2e6' 
-  },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#2c3e50' },
-  modalCloseButton: { 
-    width: 30, 
-    height: 30, 
-    borderRadius: 15, 
-    backgroundColor: '#e9ecef', 
-    alignItems: 'center', 
-    justifyContent: 'center' 
-  },
-  modalCloseText: { fontSize: 16, color: '#6c757d' },
-  modalOption: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    paddingHorizontal: 20, 
-    paddingVertical: 15, 
-    borderBottomWidth: 1, 
-    borderBottomColor: '#f8f9fa' 
-  },
-  modalOptionText: { fontSize: 16, color: '#2c3e50' },
-  checkmark: { fontSize: 18, color: Colors.light.success, fontWeight: 'bold' },
-});
