@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/src/contexts/AuthContext';
 import { Colors } from '@/constants/Colors';
+import { useTheme } from '@/hooks/useTheme';
 
 import {
   collection,
@@ -38,6 +39,7 @@ import { s } from '@/components/admin/adminStyles';
 
 export default function AdminScreen() {
   const { isAdmin, loading, user: adminUser } = useAuth();
+  const { theme } = useTheme();
   const [tab, setTab] = useState<'validations' | 'users' | 'conversations' | 'stats'>('validations');
 
   const [pending, setPending] = useState<UserRow[]>([]);
@@ -349,7 +351,7 @@ export default function AdminScreen() {
   // ---- UI gate ----
   if (loading) {
     return (
-      <View style={s.center}>
+      <View style={[s.center, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color={Colors.light.primary} />
       </View>
     );
@@ -357,14 +359,14 @@ export default function AdminScreen() {
 
   if (!isAdmin) {
     return (
-      <View style={s.center}>
-        <Text>Accès réservé aux administrateurs.</Text>
+      <View style={[s.center, { backgroundColor: theme.background }]}>
+        <Text style={{ color: theme.text }}>Accès réservé aux administrateurs.</Text>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       <AdminHeaderTabs
         tab={tab}
         setTab={setTab}
@@ -372,9 +374,10 @@ export default function AdminScreen() {
         usersCount={users.length}
         conversationsCount={conversations.length}
         styles={s}
+        theme={theme}
       />
 
-      {tab === 'validations' && <ValidationsTab pending={pending} onVerify={verifyAidant} styles={s} />}
+      {tab === 'validations' && <ValidationsTab pending={pending} onVerify={verifyAidant} styles={s} theme={theme} />}
 
       {tab === 'users' && (
         <UsersTab
@@ -385,6 +388,7 @@ export default function AdminScreen() {
           onToggleSuspend={toggleSuspend}
           onDeleteUser={deleteUser}
           styles={s}
+          theme={theme}
         />
       )}
 
@@ -396,6 +400,7 @@ export default function AdminScreen() {
           setFilter={setFilter}
           onOpenConversation={loadConversationMessages}
           styles={s}
+          theme={theme}
         />
       )}
 

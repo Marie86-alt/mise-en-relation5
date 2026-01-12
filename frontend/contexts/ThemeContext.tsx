@@ -66,12 +66,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const themeType: ThemeType = isDark ? 'dark' : 'light';
     const theme = getTheme(isDark);
 
-    if (isLoading) {
-          // Retourner le contexte avec les valeurs par défaut pendant le chargement
-      // ou un loading screen si nécessaire
-      return null;
-    }
-
+    // Toujours fournir le contexte, même pendant le chargement
     return (
           <ThemeContext.Provider
                   value={{
@@ -82,8 +77,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
                   }}
                 >
             {children}
-          </ThemeContext.Provider>ThemeContext.Provider>
+          </ThemeContext.Provider>
         );
 };
 
-export default ThemeContext;</ThemeContext.Provider>
+export default ThemeContext;

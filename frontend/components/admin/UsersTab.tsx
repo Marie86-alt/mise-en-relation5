@@ -12,6 +12,7 @@ export function UsersTab({
   onToggleSuspend,
   onDeleteUser,
   styles,
+  theme,
 }: {
   users: UserRow[];
   totalUsersCount: number;
@@ -20,16 +21,18 @@ export function UsersTab({
   onToggleSuspend: (u: UserRow) => void;
   onDeleteUser: (u: UserRow) => void;
   styles: any;
+  theme: any;
 }) {
   return (
-    <View style={{ flex: 1, padding: 12 }}>
-      <Text style={styles.sectionTitle}>Utilisateurs ({totalUsersCount})</Text>
+    <View style={{ flex: 1, padding: 12, backgroundColor: theme.background }}>
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Utilisateurs ({totalUsersCount})</Text>
 
       <TextInput
         placeholder="Filtrer par email ou nom…"
+        placeholderTextColor={theme.textSecondary}
         value={filter}
         onChangeText={setFilter}
-        style={styles.search}
+        style={[styles.search, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]}
         autoCapitalize="none"
       />
 
@@ -37,13 +40,13 @@ export function UsersTab({
         data={users}
         keyExtractor={(it) => it.id}
         contentContainerStyle={{ gap: 10, paddingVertical: 8 }}
-        ListEmptyComponent={<Text style={styles.muted}>Aucun utilisateur</Text>}
+        ListEmptyComponent={<Text style={[styles.muted, { color: theme.textSecondary }]}>Aucun utilisateur</Text>}
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.name}>{item.displayName || 'Sans nom'}</Text>
-              <Text style={styles.email}>{item.email || ''}</Text>
-              <Text style={styles.meta}>
+              <Text style={[styles.name, { color: theme.text }]}>{item.displayName || 'Sans nom'}</Text>
+              <Text style={[styles.email, { color: theme.textSecondary }]}>{item.email || ''}</Text>
+              <Text style={[styles.meta, { color: theme.textSecondary }]}>
                 {(item.isAidant ? 'Aidant • ' : 'Client • ') + (item.secteur || '—')}
                 {'  '}|  {item.isVerified ? 'Vérifié ✅' : 'Non vérifié'}
                 {item.isSuspended ? '  |  ⚠️ SUSPENDU' : ''}

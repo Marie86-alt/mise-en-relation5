@@ -10,6 +10,7 @@ import {
       ScrollView,
 } from 'react-native';
 import type { MessageRow } from './AdminTypes';
+import { useTheme } from '@/hooks/useTheme';
 
 export function MessagesModal({
       visible,
@@ -24,6 +25,8 @@ export function MessagesModal({
       onDeleteMessage: (m: MessageRow) => void;
       styles: any;
 }) {
+      const { theme } = useTheme();
+
       // Calculer le nombre de messages
   const messageCount = messages.length;
 
@@ -45,15 +48,15 @@ export function MessagesModal({
 
   return (
           <Modal visible={visible} animationType="slide">
-                <SafeAreaView style={{ flex: 1, backgroundColor: '#FAFAFA' }}>
+                <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
                     {/* En-tête amélioré */}
                         <View
                                       style={{
                                                       paddingHorizontal: 16,
                                                       paddingVertical: 12,
-                                                      backgroundColor: '#FFFFFF',
+                                                      backgroundColor: theme.surface,
                                                       borderBottomWidth: 1,
-                                                      borderBottomColor: '#E0E0E0',
+                                                      borderBottomColor: theme.border,
                                       }}
                                     >
                                   <View
@@ -68,7 +71,7 @@ export function MessagesModal({
                                                             <Text
                                                                                 style={{
                                                                                                       fontSize: 16,
-                                                                                                      color: '#1976D2',
+                                                                                                      color: theme.primary,
                                                                                                       fontWeight: '600',
                                                                                 }}
                                                                               >
@@ -78,7 +81,7 @@ export function MessagesModal({
                                               <Text
                                                                 style={{
                                                                                     fontSize: 12,
-                                                                                    color: '#999',
+                                                                                    color: theme.textSecondary,
                                                                                     fontWeight: '500',
                                                                 }}
                                                               >
@@ -89,13 +92,13 @@ export function MessagesModal({
                                                   style={{
                                                                     fontSize: 18,
                                                                     fontWeight: 'bold',
-                                                                    color: '#333',
+                                                                    color: theme.text,
                                                                     marginBottom: 4,
                                                   }}
                                                 >
                                               💬 Conversation
                                   </Text>
-                                  <Text style={{ fontSize: 12, color: '#999' }}>
+                                  <Text style={{ fontSize: 12, color: theme.textSecondary }}>
                                               Affichage des messages échangés
                                   </Text>
                         </View>
@@ -116,7 +119,7 @@ export function MessagesModal({
                                                                   <Text
                                                                                       style={{
                                                                                                             fontSize: 14,
-                                                                                                            color: '#999',
+                                                                                                            color: theme.textSecondary,
                                                                                                             fontStyle: 'italic',
                                                                                           }}
                                                                                     >
@@ -131,7 +134,7 @@ export function MessagesModal({
                                                                                                                 marginBottom: 12,
                                                                                                                 paddingHorizontal: 12,
                                                                                                                 paddingVertical: 10,
-                                                                                                                backgroundColor: '#FFFFFF',
+                                                                                                                backgroundColor: theme.surface,
                                                                                                                 borderRadius: 8,
                                                                                                                 borderLeftWidth: 3,
                                                                                                                 borderLeftColor:
@@ -156,7 +159,7 @@ export function MessagesModal({
                                                                                                                                 style={{
                                                                                                                                                           fontSize: 13,
                                                                                                                                                           fontWeight: 'bold',
-                                                                                                                                                          color: '#333',
+                                                                                                                                                          color: theme.text,
                                                                                                                                                           flex: 1,
                                                                                                                                     }}
                                                                                                                               >
@@ -179,19 +182,19 @@ export function MessagesModal({
                                                                                       <Text
                                                                                                             style={{
                                                                                                                                     fontSize: 14,
-                                                                                                                                    color: '#555',
+                                                                                                                                    color: theme.text,
                                                                                                                                     lineHeight: 20,
                                                                                                                                     marginBottom: 8,
                                                                                                                 }}
                                                                                                           >
                                                                                           {msg.texte}
                                                                                           </Text>
-                                                                      
+
                                                                           {/* Footer avec date/heure */}
                                                                                       <Text
                                                                                                             style={{
                                                                                                                                     fontSize: 11,
-                                                                                                                                    color: '#AAA',
+                                                                                                                                    color: theme.textSecondary,
                                                                                                                                     textAlign: 'right',
                                                                                                                                     fontStyle: 'italic',
                                                                                                                 }}

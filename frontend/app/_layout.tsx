@@ -15,6 +15,7 @@ import { applyTextInputDefaults } from '@/src/ui/applyTextInputDefaults';
 import { STRIPE_CONFIG } from '@/src/config/stripe';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { ThemeProvider as CustomThemeProvider } from '@/contexts/ThemeContext';
+import { useTheme } from '@/hooks/useTheme';
 // import * as SplashScreen from 'expo-splash-screen'; // Plus nécessaire
 
 // Plus de splash screen Expo - utilisation seulement de notre écran personnalisé
@@ -36,12 +37,14 @@ applyTextInputDefaults();
 
 // Composant pour l'écran de chargement personnalisé
 function CustomLoadingScreen() {
+     const { theme } = useTheme();
+
      return (
           <View style={{
                flex: 1,
                justifyContent: 'center',
                alignItems: 'center',
-               backgroundColor: '#f8f9fa',
+               backgroundColor: theme.background,
                paddingHorizontal: 20
           }}>
               {/* Logo de l'application */}
@@ -59,36 +62,36 @@ function CustomLoadingScreen() {
                <Text style={{
                fontSize: 28,
                fontWeight: '700',
-               color: '#2c3e50',
+               color: theme.text,
      textAlign: 'center',
                marginBottom: 8,
                letterSpacing: 1
           }}>
                     A La Case Nout Gramoun
-               </Text>Text>
+               </Text>
 
                <Text style={{
                fontSize: 16,
-               color: '#6c757d',
+               color: theme.textSecondary,
                textAlign: 'center',
                marginBottom: 40,
                fontStyle: 'italic'
           }}>
                     Votre plateforme de services à domicile
-               </Text>Text>
+               </Text>
 
-               <ActivityIndicator size="large" color="#247ba0" />
+               <ActivityIndicator size="large" color={theme.primary} />
 
                <Text style={{
                marginTop: 16,
                fontSize: 16,
-               color: '#6c757d',
+               color: theme.textSecondary,
                textAlign: 'center',
                fontWeight: '500'
           }}>
                     Chargement...
-               </Text>Text>
-          </View>View>
+               </Text>
+          </View>
           );
 }
 
@@ -132,8 +135,8 @@ function RootLayoutNav() {
         <Stack.Screen name="profile-detail" options={{ headerShown: false }} />
         <Stack.Screen name="profile-list" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
-       </Stack>Stack>
-      </ErrorBoundary>ErrorBoundary>
+       </Stack>
+      </ErrorBoundary>
       );
 }
 
@@ -155,10 +158,10 @@ export default function RootLayout() {
                     style={colorScheme === 'dark' ? 'light' : 'dark'}
                     translucent={Platform.OS === 'android'}
                     />
-              </ThemeProvider>ThemeProvider>
-             </CustomThemeProvider>CustomThemeProvider>
-            </AuthProvider>AuthProvider>
-           </StripeProvider>StripeProvider>
-          </SafeAreaProvider>SafeAreaProvider>
+              </ThemeProvider>
+             </CustomThemeProvider>
+            </AuthProvider>
+           </StripeProvider>
+          </SafeAreaProvider>
           );
-}</ErrorBoundary>
+}

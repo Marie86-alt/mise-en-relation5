@@ -7,24 +7,27 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { Colors } from '@/constants/Colors';
+import { useTheme } from '@/hooks/useTheme';
 
 // ✅ CheckBox local
 const CheckBox = ({
   label,
   selected,
   onPress,
-}: { label: string; selected: boolean; onPress: () => void }) => (
+  theme,
+}: { label: string; selected: boolean; onPress: () => void; theme: any }) => (
   <TouchableOpacity style={styles.checkboxContainer} onPress={onPress}>
-    <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
+    <View style={[styles.checkbox, { borderColor: theme.border, backgroundColor: selected ? Colors.light.primary : theme.surface }, selected && styles.checkboxSelected]}>
       <Text style={styles.checkboxText}>{selected ? '✓' : ''}</Text>
     </View>
-    <Text style={styles.checkboxLabel}>{label}</Text>
+    <Text style={[styles.checkboxLabel, { color: theme.text }]}>{label}</Text>
   </TouchableOpacity>
 );
 
 export default function ProfileScreen() {
   const { user, isAdmin, updateUserProfile, logout } = useAuth();
   const router = useRouter();
+  const { theme } = useTheme();
 
   // ✅ États profil aidant
   const [genre, setGenre] = useState('');
@@ -112,19 +115,19 @@ export default function ProfileScreen() {
   const initial = user?.email?.charAt(0)?.toUpperCase() || '?';
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>👤 Mon Profil</Text>
+        <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>👤 Mon Profil</Text>
         </View>
 
-        <View style={styles.userContainer}>
+        <View style={[styles.userContainer, { backgroundColor: theme.surface }]}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initial}</Text>
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.displayName || 'Utilisateur'}</Text>
-            <Text style={styles.userEmail}>{user?.email}</Text>
+            <Text style={[styles.userName, { color: theme.text }]}>{user?.displayName || 'Utilisateur'}</Text>
+            <Text style={[styles.userEmail, { color: theme.textSecondary }]}>{user?.email}</Text>
           </View>
         </View>
 
@@ -135,34 +138,34 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         )}
 
-        <View style={styles.aidantSection}>
+        <View style={[styles.aidantSection, { backgroundColor: theme.surface }]}>
           <Text style={styles.sectionTitle}>Mon Profil Aidant</Text>
-          <Text style={styles.sectionSubtitle}>Remplissez ces informations pour apparaître dans les recherches.</Text>
+          <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>Remplissez ces informations pour apparaître dans les recherches.</Text>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Je suis *</Text>
+            <Text style={[styles.label, { color: theme.text }]}>Je suis *</Text>
             <View style={styles.checkboxRow}>
-              <CheckBox label="Une Femme" selected={genre === 'Femme'} onPress={() => setGenre('Femme')} />
-              <CheckBox label="Un Homme" selected={genre === 'Homme'} onPress={() => setGenre('Homme')} />
+              <CheckBox label="Une Femme" selected={genre === 'Femme'} onPress={() => setGenre('Femme')} theme={theme} />
+              <CheckBox label="Un Homme" selected={genre === 'Homme'} onPress={() => setGenre('Homme')} theme={theme} />
             </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Secteur proposé *</Text>
-            <TouchableOpacity style={styles.selectorButton} onPress={() => setShowSecteurModal(true)}>
-              <Text style={[styles.selectorButtonText, !secteur && styles.placeholderText]}>
+            <Text style={[styles.label, { color: theme.text }]}>Secteur proposé *</Text>
+            <TouchableOpacity style={[styles.selectorButton, { backgroundColor: theme.surface, borderColor: theme.border }]} onPress={() => setShowSecteurModal(true)}>
+              <Text style={[styles.selectorButtonText, !secteur && styles.placeholderText, { color: secteur ? theme.text : theme.textSecondary }]}>
                 {secteur || 'Sélectionnez votre secteur principal'}
               </Text>
-              <Text style={styles.selectorArrow}>▼</Text>
+              <Text style={[styles.selectorArrow, { color: theme.textSecondary }]}>▼</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Années d&apos;expérience</Text>
+            <Text style={[styles.label, { color: theme.text }]}>Années d&apos;expérience</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.background, borderColor: theme.border, color: theme.text }]}
               placeholder="Ex: 5"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.textSecondary}
               keyboardType="numeric"
               value={experience}
               onChangeText={setExperience}
@@ -170,19 +173,19 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Tarif horaire</Text>
-            <View style={[styles.input, styles.tarifFixe]}>
+            <Text style={[styles.label, { color: theme.text }]}>Tarif horaire</Text>
+            <View style={[styles.input, styles.tarifFixe, { backgroundColor: theme.background, borderColor: theme.border }]}>
               <Text style={styles.tarifFixeText}>22€/heure</Text>
-              <Text style={styles.tarifFixeNote}>Tarif fixe de la plateforme</Text>
+              <Text style={[styles.tarifFixeNote, { color: theme.textSecondary }]}>Tarif fixe de la plateforme</Text>
             </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Description de vos services</Text>
+            <Text style={[styles.label, { color: theme.text }]}>Description de vos services</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[styles.input, styles.textArea, { backgroundColor: theme.background, borderColor: theme.border, color: theme.text }]}
               placeholder="Décrivez votre expérience, vos spécialités..."
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.textSecondary}
               multiline
               value={description}
               onChangeText={setDescription}
@@ -205,7 +208,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Version 1.0.0</Text>
+          <Text style={[styles.footerText, { color: theme.textSecondary }]}>Version 1.0.0</Text>
         </View>
       </ScrollView>
 
@@ -217,11 +220,11 @@ export default function ProfileScreen() {
         onRequestClose={() => setShowSecteurModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Choisir un secteur</Text>
-              <TouchableOpacity style={styles.modalCloseButton} onPress={() => setShowSecteurModal(false)}>
-                <Text style={styles.modalCloseText}>✕</Text>
+          <View style={[styles.modalContainer, { backgroundColor: theme.surface }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Choisir un secteur</Text>
+              <TouchableOpacity style={[styles.modalCloseButton, { backgroundColor: theme.background }]} onPress={() => setShowSecteurModal(false)}>
+                <Text style={[styles.modalCloseText, { color: theme.textSecondary }]}>✕</Text>
               </TouchableOpacity>
             </View>
 
@@ -230,13 +233,13 @@ export default function ProfileScreen() {
               keyExtractor={(item) => item}
               renderItem={({ item }) => (
                 <TouchableOpacity
-                  style={styles.modalOption}
+                  style={[styles.modalOption, { borderBottomColor: theme.border }]}
                   onPress={() => {
                     setSecteur(item);
                     setShowSecteurModal(false);
                   }}
                 >
-                  <Text style={styles.modalOptionText}>{item}</Text>
+                  <Text style={[styles.modalOptionText, { color: theme.text }]}>{item}</Text>
                   {secteur === item && <Text style={styles.checkmark}>✓</Text>}
                 </TouchableOpacity>
               )}

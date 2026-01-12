@@ -20,8 +20,8 @@ export const ThemeToggle = () => {
                 >
                 <Text style={[styles.emoji, { color: theme.text }]}>
                   {isDark ? '☀️' : '🌙'}
-                </Text>Text>
-          </Pressable>Pressable>
+                </Text>
+          </Pressable>
         );
 };
 
@@ -38,4 +38,4 @@ const styles = StyleSheet.create({
           fontSize: 18,
           fontWeight: '600',
     },
-});</Pressable>
+});

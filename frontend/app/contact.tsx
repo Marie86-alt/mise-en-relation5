@@ -5,6 +5,7 @@ import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
+import { useTheme } from '@/hooks/useTheme';
 
 const CONTACT = {
   name: 'Eva Mounoussamy',
@@ -20,6 +21,7 @@ const CONTACT = {
 };
 
 export default function ContactScreen() {
+  const { theme } = useTheme();
   const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
   // Diagnostic des URL schemes au chargement
@@ -154,30 +156,30 @@ export default function ContactScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.card}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         {/* Avatar + nom */}
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>EM</Text>
         </View>
-        <Text style={styles.title}>👋 Contact</Text>
-        <Text style={styles.name}>{CONTACT.name}</Text>
+        <Text style={[styles.title, { color: theme.text }]}>👋 Contact</Text>
+        <Text style={[styles.name, { color: theme.textSecondary }]}>{CONTACT.name}</Text>
 
         {/* Lignes d'infos */}
-        <View style={styles.infoBox}>
+        <View style={[styles.infoBox, { backgroundColor: theme.background, borderColor: theme.border }]}>
           <View style={styles.infoRow}>
             <Ionicons name="call" size={18} color={Colors.light.primary} />
-            <Text style={styles.infoLabel}>Téléphone</Text>
+            <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Téléphone</Text>
             <TouchableOpacity onPress={handlePhonePress} style={styles.infoAction} activeOpacity={0.8}>
               <Text style={styles.infoValue}>{CONTACT.phoneDisplay}</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: theme.border }]} />
 
           <View style={styles.infoRow}>
             <Ionicons name="mail" size={18} color={Colors.light.primary} />
-            <Text style={styles.infoLabel}>E-mail</Text>
+            <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>E-mail</Text>
             <TouchableOpacity onPress={handleEmailPress} style={styles.infoAction} activeOpacity={0.8}>
               <Text style={styles.infoValue}>{CONTACT.email}</Text>
             </TouchableOpacity>
@@ -189,13 +191,13 @@ export default function ContactScreen() {
           <TouchableOpacity onPress={handlePhonePress} style={[styles.cta, styles.ctaPrimary]} activeOpacity={0.9}>
             <Text style={styles.ctaText}>📞 Appeler</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleEmailPress} style={[styles.cta, styles.ctaSecondary]} activeOpacity={0.9}>
+          <TouchableOpacity onPress={handleEmailPress} style={[styles.cta, styles.ctaSecondary, { backgroundColor: theme.text }]} activeOpacity={0.9}>
             <Text style={styles.ctaText}>✉️ Écrire</Text>
           </TouchableOpacity>
         </View>
 
         {/* Petit footer */}
-        <Text style={styles.footer}>Nous revenons vers vous au plus vite 💬</Text>
+        <Text style={[styles.footer, { color: theme.textSecondary }]}>Nous revenons vers vous au plus vite 💬</Text>
       </View>
     </SafeAreaView>
   );

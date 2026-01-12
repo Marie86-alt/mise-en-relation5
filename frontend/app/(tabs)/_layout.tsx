@@ -5,10 +5,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function TabsLayout() {
     const insets = useSafeAreaInsets();
     const bottomPad = Math.max(insets.bottom, 8); // minimum de confort
+    const { theme } = useTheme();
 
   return (
         <Tabs
@@ -16,12 +18,12 @@ export default function TabsLayout() {
                           headerShown: true,
                           headerRight: () => <ThemeToggle />,
                           tabBarHideOnKeyboard: true,
-                          tabBarActiveTintColor: Colors.light.primary,
-                          tabBarInactiveTintColor: Colors.light.grey,
+                          tabBarActiveTintColor: Colors.light.primary, // Toujours orange
+                          tabBarInactiveTintColor: theme.textSecondary,
                           tabBarStyle: {
-                                      backgroundColor: Colors.light.background,
+                                      backgroundColor: theme.surface,
                                       borderTopWidth: 1,
-                                      borderTopColor: '#ecf0f1',
+                                      borderTopColor: theme.border,
                                       height: 56 + insets.bottom, // ← réserve la place pour la barre système
                                       paddingTop: 8,
                                       paddingBottom: bottomPad, // ← évite que la tab bar touche le bord
@@ -31,6 +33,10 @@ export default function TabsLayout() {
                                       fontWeight: '500',
                                       marginTop: 2,
                           },
+                          headerStyle: {
+                                      backgroundColor: theme.surface,
+                          },
+                          headerTintColor: theme.text,
                 }}
               >
               <Tabs.Screen
@@ -98,6 +104,6 @@ export default function TabsLayout() {
                                                 ),
                         }}
                       />
-        </Tabs>Tabs>
+        </Tabs>
       );
-}</Tabs>
+}

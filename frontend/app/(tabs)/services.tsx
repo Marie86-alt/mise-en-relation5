@@ -6,6 +6,7 @@ import { useAuth } from '@/src/contexts/AuthContext';
 import { chatService } from '../../src/services/firebase/chatService';
 import { Colors } from '@/constants/Colors';
 import { DocumentData, Timestamp } from 'firebase/firestore';
+import { useTheme } from '@/hooks/useTheme';
 
 type StatutServiceType = 'conversation' | 'service_confirme' | 'en_cours' | 'termine' | 'evaluation' | 'acompte_paye';
 
@@ -36,7 +37,7 @@ interface Conversation extends DocumentData {
   heureFin?: string;
 }
 
-const ConversationCard = ({ item, onPress }: { item: Conversation; onPress: () => void }) => {
+const ConversationCard = ({ item, onPress, theme }: { item: Conversation; onPress: () => void; theme: any }) => {
   const { user } = useAuth();
   if (!user) return null;
 
@@ -45,13 +46,13 @@ const ConversationCard = ({ item, onPress }: { item: Conversation; onPress: () =
   const statutInfo = STATUTS[item.status] || STATUTS.conversation;
 
   return (
-    <TouchableOpacity style={styles.serviceCard} onPress={onPress}>
+    <TouchableOpacity style={[styles.serviceCard, { backgroundColor: theme.surface, borderColor: theme.border }]} onPress={onPress}>
       <View style={styles.serviceHeader}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{(otherUser?.displayName || '?').charAt(0).toUpperCase()}</Text>
         </View>
         <View style={styles.serviceInfo}>
-          <Text style={styles.profileName}>{otherUser?.displayName || 'Interlocuteur'}</Text>
+          <Text style={[styles.profileName, { color: theme.text }]}>{otherUser?.displayName || 'Interlocuteur'}</Text>
           <Text style={styles.serviceSecteur}>{item.secteur || '—'}</Text>
         </View>
         <View style={[styles.statutBadge, { backgroundColor: statutInfo.couleur }]}>
@@ -59,7 +60,7 @@ const ConversationCard = ({ item, onPress }: { item: Conversation; onPress: () =
           <Text style={styles.statutText}>{statutInfo.label}</Text>
         </View>
       </View>
-      <Text style={styles.dernierMessage} numberOfLines={1}>
+      <Text style={[styles.dernierMessage, { color: theme.textSecondary }]} numberOfLines={1}>
         {item.lastMessage?.texte || 'Démarrez la conversation...'}
       </Text>
     </TouchableOpacity>
@@ -70,15 +71,17 @@ const Section = ({
   title,
   data,
   onPressItem,
+  theme,
 }: {
   title: string;
   data: Conversation[];
   onPressItem: (item: Conversation) => void;
+  theme: any;
 }) => (
   <View style={styles.sectionContainer}>
-    <Text style={styles.sectionTitle}>{title}</Text>
+    <Text style={[styles.sectionTitle, { color: theme.text }]}>{title}</Text>
     {data.map((item: Conversation) => (
-      <ConversationCard key={item.id} item={item} onPress={() => onPressItem(item)} />
+      <ConversationCard key={item.id} item={item} onPress={() => onPressItem(item)} theme={theme} />
     ))}
   </View>
 );
@@ -88,6 +91,7 @@ export default function MesServicesScreen() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { user } = useAuth();
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (!user) {
@@ -134,23 +138,23 @@ export default function MesServicesScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <ActivityIndicator style={{ flex: 1 }} size="large" color={Colors.light.primary} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>📱 Mes Services</Text>
-        <Text style={styles.headerSubtitle}>Suivez vos discussions et services</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>📱 Mes Services</Text>
+        <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>Suivez vos discussions et services</Text>
       </View>
 
       {conversations.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyTitle}>📭 Aucun service</Text>
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyTitle, { color: theme.textSecondary }]}>📭 Aucun service</Text>
+          <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
             Lorsque vous contacterez un aidant, vos services apparaîtront ici.
           </Text>
           <TouchableOpacity style={styles.nouvelleRechercheButton} onPress={() => router.push('/(tabs)')}>
@@ -161,7 +165,7 @@ export default function MesServicesScreen() {
         <ScrollView>
           {Object.entries(sections).map(
             ([title, data]) => (data as Conversation[]).length > 0 && (
-              <Section key={title} title={title} data={data as Conversation[]} onPressItem={ouvrirConversation} />
+              <Section key={title} title={title} data={data as Conversation[]} onPressItem={ouvrirConversation} theme={theme} />
             )
           )}
         </ScrollView>
