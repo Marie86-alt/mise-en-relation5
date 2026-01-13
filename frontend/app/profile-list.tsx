@@ -138,7 +138,7 @@ export default function ProfileListScreen() {
               try {
                 router.replace('/(tabs)');
               } catch (error) {
-                console.error('Erreur navigation nouvelle recherche:', error);
+                if (__DEV__) console.log('❌ Erreur navigation:', error);
               }
             }}>
                 <Text style={styles.backButtonText}>← Nouvelle recherche</Text>
@@ -175,7 +175,7 @@ export default function ProfileListScreen() {
               try {
                 router.replace('/(tabs)');
               } catch (error) {
-                console.error('Erreur navigation nouvelle recherche:', error);
+                if (__DEV__) console.log('❌ Erreur navigation:', error);
               }
             }}>
           <Text style={styles.backButtonText}>← Nouvelle recherche</Text>
@@ -199,7 +199,7 @@ export default function ProfileListScreen() {
               try {
                 router.replace('/(tabs)');
               } catch (error) {
-                console.error('Erreur navigation nouvelle recherche:', error);
+                if (__DEV__) console.log('❌ Erreur navigation:', error);
               }
             }}>
               <Text style={styles.newSearchButtonText}>Modifier la recherche</Text>

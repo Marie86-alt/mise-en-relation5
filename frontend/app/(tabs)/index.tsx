@@ -203,7 +203,7 @@ const handleJourChange = (text: string) => {
             await (logout as any)(); 
             // Pas de navigation manuelle - laisse AuthContext._layout.tsx gérer
           } catch (error) { 
-            console.error('Erreur de déconnexion:', error); 
+            if (__DEV__) console.log('❌ Erreur déconnexion:', error); 
           } 
         } 
       }

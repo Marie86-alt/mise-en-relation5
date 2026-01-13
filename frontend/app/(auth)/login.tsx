@@ -38,11 +38,13 @@ export default function LoginScreen() {
     setIsConnecting(true);
     try {
       await signIn(email.trim(), password);
-    } catch (error: any) { // ✅ On type 'error' et on l'utilise ci-dessous
-      console.error('Erreur de connexion détaillée:', error); // Log pour le débogage
+    } catch (error: any) {
+      // Log silencieux en développement (pas de console.error pour éviter la notification Expo)
+      if (__DEV__) {
+        console.log('❌ Échec de connexion:', error.code || error.message);
+      }
       Alert.alert(
         'Erreur de connexion',
-        // On peut afficher un message plus générique à l'utilisateur
         'L\'email ou le mot de passe est incorrect. Veuillez réessayer.'
       );
     } finally {

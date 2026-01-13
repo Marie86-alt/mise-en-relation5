@@ -73,7 +73,7 @@ export default function ProfileScreen() {
             await logout();
             // Pas de navigation manuelle - laisse AuthContext._layout.tsx gérer
           } catch (error) {
-            console.error('Erreur déconnexion:', error);
+            if (__DEV__) console.log('❌ Erreur déconnexion:', error);
           }
         },
       },

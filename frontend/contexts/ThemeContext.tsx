@@ -66,7 +66,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const themeType: ThemeType = isDark ? 'dark' : 'light';
     const theme = getTheme(isDark);
 
-    // Toujours fournir le contexte, même pendant le chargement
+    // Attendre le chargement de la préférence avant de rendre les enfants
+    if (isLoading) {
+        return null; // ou un simple loader si vous préférez
+    }
+
     return (
           <ThemeContext.Provider
                   value={{

@@ -3,7 +3,7 @@ import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
-// import 'react-native-reanimated'; // Temporairement commenté pour éviter les erreurs
+import 'react-native-reanimated';
 import { useEffect } from 'react';
 import { Platform, View, ActivityIndicator, Text, Image } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -20,17 +20,35 @@ import { useTheme } from '@/hooks/useTheme';
 
 // Plus de splash screen Expo - utilisation seulement de notre écran personnalisé
 
-// Intercepter les erreurs de calculatePriceFromTimeRange pour éviter les notifications
+// Intercepter les erreurs pour éviter les notifications inutiles
 const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
+
 console.error = (...args) => {
      const message = args.join(' ');
      if (message.includes('calculatePriceFromTimeRange') ||
           message.includes('Durée minimum') ||
-          message.includes('Duration minimum')) {
+          message.includes('Duration minimum') ||
+          message.includes('Could not reach Cloud Firestore backend') ||
+          message.includes('Firestore') ||
+          message.includes('firebase/firestore') ||
+          message.includes('FirebaseError') ||
+          message.includes('Erreur de connexion détaillée') ||
+          message.includes('Backend didn\'t respond') ||
+          message.includes('10 seconds')) {
           // Ignore silencieusement ces erreurs spécifiques
      return;
      }
      originalConsoleError(...args);
+};
+
+console.warn = (...args) => {
+     const message = args.join(' ');
+     if (message.includes('Firestore') || message.includes('Firebase')) {
+          // Ignore les warnings Firebase
+          return;
+     }
+     originalConsoleWarn(...args);
 };
 
 applyTextInputDefaults();

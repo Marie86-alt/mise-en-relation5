@@ -72,7 +72,10 @@ function SignupScreen() {
       await (signUp as any)(email.trim(), password, additionalData);
       Alert.alert('Succès', 'Votre compte a été créé avec succès !');
     } catch (error: any) {
-      console.error('Erreur d\'inscription:', error);
+      // Log silencieux pour debug
+      if (__DEV__) {
+        console.log('❌ Échec inscription:', error.code || error.message);
+      }
       let errorMessage = 'Erreur lors de la création du compte';
       if (error.message.includes('email-already-in-use')) {
         errorMessage = 'Cette adresse email est déjà utilisée';

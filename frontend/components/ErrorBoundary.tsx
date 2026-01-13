@@ -32,7 +32,7 @@ class ErrorBoundaryClass extends React.Component<Props, State> {
         ErrorService.logError(
                 'REACT_ERROR',
                 error.message,
-                errorInfo.componentStack,
+                errorInfo.componentStack ?? undefined,
                 'critical'
               );
   }

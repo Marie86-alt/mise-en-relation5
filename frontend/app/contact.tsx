@@ -78,7 +78,7 @@ export default function ContactScreen() {
         );
       }
     } catch (error) {
-      console.error('❌ Erreur handleEmailPress:', errorMessage(error));
+      if (__DEV__) console.log('❌ Erreur email:', errorMessage(error));
       Alert.alert(
         "Erreur",
         "Impossible d'ouvrir l'application e-mail.\n\nVous pouvez nous contacter à :\n" + CONTACT.email,

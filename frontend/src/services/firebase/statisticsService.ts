@@ -237,9 +237,9 @@ export const statisticsService = {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
-    // 📈 Évolution mensuelle (6 derniers mois) basée sur services terminés
+    // 📈 Évolution mensuelle (3 derniers mois) basée sur services terminés
     const evolutionMensuelle: { mois: string; services: number; revenue: number }[] = [];
-    for (let i = 5; i >= 0; i--) {
+    for (let i = 2; i >= 0; i--) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const start = new Date(d.getFullYear(), d.getMonth(), 1);
       const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
