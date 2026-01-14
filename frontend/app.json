@@ -2,7 +2,7 @@
   "expo": {
     "name": "A La Case Nout Gramoun",
     "slug": "mise-en-relation-app",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,6 +13,7 @@
       "bundleIdentifier": "com.miseenrelation.app"
     },
     "android": {
+      "versionCode": 6,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
