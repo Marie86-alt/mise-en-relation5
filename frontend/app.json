@@ -10,7 +10,15 @@
     "scheme": "miseenrelation",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.miseenrelation.app"
+      "bundleIdentifier": "com.miseenrelation.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Cette application n'utilise pas la caméra. Cette permission est requise par une bibliothèque tierce.",
+        "NSPhotoLibraryUsageDescription": "Cette application n'accède pas à vos photos. Cette permission est requise par une bibliothèque tierce.",
+        "NSMicrophoneUsageDescription": "Cette application n'utilise pas le microphone. Cette permission est requise par une bibliothèque tierce.",
+        "NSLocationWhenInUseUsageDescription": "Cette application n'utilise pas votre localisation. Cette permission est requise par une bibliothèque tierce."
+      },
+      "deploymentTarget": "15.1"
     },
     "android": {
       "versionCode": 6,
@@ -30,12 +38,11 @@
         "expo-build-properties",
         {
           "ios": {
-            "useFrameworks": "static"
+            "deploymentTarget": "15.1"
           }
         }
       ],
-      "expo-web-browser",
-      "expo-font"
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
