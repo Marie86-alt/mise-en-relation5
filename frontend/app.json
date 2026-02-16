@@ -9,7 +9,7 @@
     "newArchEnabled": false,
     "scheme": "miseenrelation",
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.miseenrelation.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,

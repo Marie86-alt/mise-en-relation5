@@ -25,7 +25,7 @@ const CheckBox = ({
 );
 
 export default function ProfileScreen() {
-  const { user, isAdmin, updateUserProfile, logout } = useAuth();
+  const { user, isAdmin, updateUserProfile, logout, deleteAccount } = useAuth();
   const router = useRouter();
   const { theme } = useTheme();
 
@@ -78,6 +78,49 @@ export default function ProfileScreen() {
         },
       },
     ]);
+  };
+
+  const handleDeleteAccount = (): void => {
+    Alert.alert(
+      '⚠️ Supprimer mon compte',
+      'Cette action est irréversible. Toutes vos données seront définitivement supprimées.\n\nÊtes-vous sûr(e) de vouloir continuer ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: () => {
+            // Double confirmation
+            Alert.alert(
+              '🚨 Confirmation finale',
+              'Votre compte et toutes vos données seront supprimés définitivement.\n\nCette action ne peut pas être annulée.',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'Supprimer définitivement',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await deleteAccount();
+                      Alert.alert('Compte supprimé', 'Votre compte a été supprimé avec succès.');
+                    } catch (error: any) {
+                      if (error?.code === 'auth/requires-recent-login') {
+                        Alert.alert(
+                          'Reconnexion requise',
+                          'Pour des raisons de sécurité, veuillez vous déconnecter puis vous reconnecter avant de supprimer votre compte.'
+                        );
+                      } else {
+                        Alert.alert('Erreur', `Impossible de supprimer le compte : ${error.message}`);
+                      }
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
   };
 
   const handleSaveChanges = async () => {
@@ -205,6 +248,10 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.logoutButtonText}>🚪 Se déconnecter</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity style={styles.deleteAccountButton} onPress={handleDeleteAccount}>
+            <Text style={styles.deleteAccountButtonText}>🗑️ Supprimer mon compte</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.footer}>
@@ -331,9 +378,16 @@ const styles = StyleSheet.create({
   buttonDisabled: { backgroundColor: Colors.light.grey },
   saveButtonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
 
-  actionsContainer: { marginHorizontal: 15, marginBottom: 15 },
-  logoutButton: { backgroundColor: Colors.light.danger, padding: 15, borderRadius: 8, alignItems: 'center' },
+  actionsContainer: { marginHorizontal: 15, marginBottom: 15, gap: 12 },
+  logoutButton: { backgroundColor: '#6c757d', padding: 15, borderRadius: 8, alignItems: 'center' },
   logoutButtonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
+  deleteAccountButton: {
+    backgroundColor: Colors.light.danger,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  deleteAccountButtonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
 
   footer: { alignItems: 'center', padding: 20 },
   footerText: { fontSize: 12, color: '#bdc3c7' },

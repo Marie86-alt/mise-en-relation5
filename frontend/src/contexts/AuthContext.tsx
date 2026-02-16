@@ -14,12 +14,14 @@ import {
   signOut as fbSignOut,
   onAuthStateChanged,
   updateProfile,
+  deleteUser,
   User as FirebaseUser,
 } from 'firebase/auth';
 import {
   doc,
   setDoc,
   getDoc,
+  deleteDoc,
   serverTimestamp,
   Timestamp,
   onSnapshot,
@@ -66,6 +68,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<FirebaseUser>;
   logout: () => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -339,6 +342,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     [user]
   );
 
+  const deleteAccount = useCallback(
+    async (): Promise<void> => {
+      if (!user || !auth.currentUser) {
+        throw new Error('Utilisateur non connecté');
+      }
+      setError(null);
+      setLoading(true);
+      try {
+        // 1. Supprimer le document Firestore
+        await deleteDoc(doc(db, 'users', user.uid));
+
+        // 2. Supprimer le compte Firebase Auth
+        await deleteUser(auth.currentUser);
+
+        // 3. Réinitialiser l'état local
+        setUser(null);
+      } catch (e: any) {
+        // Si l'erreur est "requires-recent-login", l'utilisateur doit se reconnecter
+        if (e?.code === 'auth/requires-recent-login') {
+          setError('Pour des raisons de sécurité, veuillez vous reconnecter avant de supprimer votre compte.');
+        } else {
+          setError(e?.message ?? 'Erreur lors de la suppression du compte');
+        }
+        throw e;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user]
+  );
+
   const clearError = useCallback(() => setError(null), []);
 
   const isAdmin = !! user?.isAdmin || user?.role === 'admin';
@@ -353,9 +387,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       signIn,
       logout,
       updateUserProfile,
+      deleteAccount,
       clearError,
     }),
-    [user, isAdmin, loading, error, signUp, signIn, logout, updateUserProfile, clearError]
+    [user, isAdmin, loading, error, signUp, signIn, logout, updateUserProfile, deleteAccount, clearError]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
