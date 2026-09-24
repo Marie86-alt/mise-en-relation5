@@ -11,6 +11,7 @@ import {
   profileMatchesSecteur,
 } from '../frontend/src/services/firebase/profileFilters.ts';
 import { PricingService } from '../frontend/src/utils/pricing.ts';
+import { DEFAULT_PRICING, sanitizePricingConfig } from '../frontend/src/config/pricingConfig.ts';
 
 test('pricing calculates special offer for 3 hours', () => {
   const result = PricingService.calculatePriceFromTimeRange('14:00', '17:00');
@@ -66,6 +67,52 @@ test('profile filters match secteur and preference locally', () => {
   assert.equal(profileMatchesSecteur(profile, 'jardinage'), false);
   assert.equal(profileMatchesPreference(profile, 'femme'), true);
   assert.equal(profileMatchesPreference(profile, 'Indifferent'), true);
+});
+
+test('pricing follows a custom configuration (config/pricing)', () => {
+  const config = { ...DEFAULT_PRICING, hourlyRate: 25, minHours: 3, specialOffers: { 4: 90 } };
+
+  assert.match(PricingService.calculatePrice(2, config).error ?? '', /minimum de 3/);
+  assert.equal(PricingService.calculatePrice(3, config).finalPrice, 75);
+
+  const offer = PricingService.calculatePrice(4, config);
+  assert.equal(offer.basePrice, 100);
+  assert.equal(offer.finalPrice, 90);
+  assert.equal(offer.discount, 10);
+
+  // L'offre par défaut (3 h = 60 €) ne s'applique plus avec cette configuration
+  assert.equal(PricingService.calculatePriceFromTimeRange('14:00', '17:00', config).finalPrice, 75);
+});
+
+test('payment amounts honour a custom deposit rate', () => {
+  const deposit = calculatePaymentAmounts(100, 'deposit', 0.3);
+  assert.equal(deposit.depositAmountEur, 30);
+  assert.equal(deposit.finalAmountEur, 70);
+  assert.equal(deposit.depositRate, 0.3);
+
+  // Taux aberrant → repli sur la valeur par défaut
+  assert.equal(calculatePaymentAmounts(100, 'deposit', 5).depositRate, DEFAULT_PRICING.depositRate);
+});
+
+test('sanitizePricingConfig falls back field by field and drops bad offers', () => {
+  const clean = sanitizePricingConfig({
+    hourlyRate: '30',
+    minHours: 2.4,
+    depositRate: 2, // hors bornes → défaut
+    commissionRate: 0.25,
+    specialOffers: { '3': 80, '4': 200, x: 10, '1': 5 }, // 4 h à 200 € plus cher que 120 € → ignorée ; 'x' et 1 h invalides
+    currency: 'euro',
+  });
+
+  assert.equal(clean.hourlyRate, 30);
+  assert.equal(clean.minHours, 2);
+  assert.equal(clean.depositRate, DEFAULT_PRICING.depositRate);
+  assert.equal(clean.commissionRate, 0.25);
+  assert.deepEqual(clean.specialOffers, { 3: 80 });
+  assert.equal(clean.currency, 'EUR');
+
+  // Document absent → configuration par défaut complète (offre 3 h incluse)
+  assert.deepEqual(sanitizePricingConfig(undefined), DEFAULT_PRICING);
 });
 
 test('profile filters ignore accents (valeurs envoyées par l\'app)', () => {

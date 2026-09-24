@@ -1,6 +1,7 @@
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '@/firebase.config';
 import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { DEFAULT_PRICING } from '@/src/config/pricingConfig';
 
 // Types simples (souples)
 interface UserData {
@@ -126,8 +127,8 @@ export type AdminStats = {
 };
 
 export const statisticsService = {
-  calculateStats: async (): Promise<AdminStats> => {
-    console.log('📊 Calcul des stats depuis Firebase...');
+  /** `commissionRate` : taux courant (config/pricing), utilisé quand une transaction n'a pas sa commission enregistrée. */
+  calculateStats: async (commissionRate: number = DEFAULT_PRICING.commissionRate): Promise<AdminStats> => {
 
     const [usersSnap, servicesSnap, avisSnap, conversationsSnap, transactionsSnap] =
       await Promise.all([
@@ -196,8 +197,8 @@ export const statisticsService = {
       : r2(servicesTermines.reduce((sum, s) => sum + Number(s.montant || 0), 0));
 
     const commissionPerçue = txFinalOnly.length
-      ? r2(txFinalOnly.reduce((sum, t) => sum + Number(t.commission ?? txAmount(t) * 0.4), 0))
-      : r2(chiffreAffaires * 0.4);
+      ? r2(txFinalOnly.reduce((sum, t) => sum + Number(t.commission ?? txAmount(t) * commissionRate), 0))
+      : r2(chiffreAffaires * commissionRate);
 
     const panierMoyen = r2(servicesRealises ? chiffreAffaires / servicesRealises : 0);
 
@@ -288,12 +289,11 @@ export const statisticsService = {
       lastUpdate: new Date().toISOString(),
     };
 
-    console.log('✅ Stats calculées:', finalStats);
     return finalStats;
   },
 
-  // Stats d'une période donnée (tu peux garder)
-  getStatsByPeriod: async (startDate: Date, endDate: Date) => {
+  // Stats d'une période donnée
+  getStatsByPeriod: async (startDate: Date, endDate: Date, commissionRate: number = DEFAULT_PRICING.commissionRate) => {
     const servicesQuery = query(
       collection(db, 'services'),
       where('createdAt', '>=', Timestamp.fromDate(startDate)),
@@ -311,7 +311,7 @@ export const statisticsService = {
       totalServices: services.length,
       completedServices: servicesTermines.length,
       revenue: r2(revenue),
-      commission: r2(revenue * 0.4),
+      commission: r2(revenue * commissionRate),
     };
   },
 };

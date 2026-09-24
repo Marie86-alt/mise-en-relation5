@@ -15,6 +15,8 @@ import { Colors } from '@/constants/Colors';
 import { FullScreenLoader } from '@/components/FullScreenLoader';
 import { useToast } from '@/contexts/ToastContext';
 import { PaymentData, PaymentService } from '../src/stripe/paymentService';
+import { calculatePaymentAmounts } from '../src/stripe/paymentAmounts';
+import { formatRate } from '../src/config/pricingConfig';
 
 // Format montant
 const formatMontant = (montant: number): string => `${montant.toFixed(2).replace('.', ',')} €`;
@@ -43,11 +45,16 @@ export default function PaiementScreen() {
 
   const initDoneRef = useRef(false);
 
-  // Montants
+  // Montants : même calcul que paymentService (taux d'acompte issu de config/pricing)
   const totalAmount = paymentData?.pricingData?.finalPrice ?? 0;
-  const depositAmount = parseFloat((totalAmount * 0.2).toFixed(2));
-  const finalAmount = totalAmount - depositAmount;
+  const amounts = useMemo(
+    () => (totalAmount > 0 ? calculatePaymentAmounts(totalAmount, 'deposit', paymentData?.depositRate) : null),
+    [totalAmount, paymentData?.depositRate]
+  );
+  const depositAmount = amounts?.depositAmountEur ?? 0;
+  const finalAmount = amounts?.finalAmountEur ?? 0;
   const currentAmount = depositAmount;
+  const depositPct = formatRate(amounts?.depositRate ?? 0.2);
 
   const handleCancel = useCallback(() => {
     Alert.alert(
@@ -182,9 +189,9 @@ export default function PaiementScreen() {
       <ScrollView style={styles.content}>
 
         <View style={styles.header}>
-          <Text style={styles.title}>💳 Acompte de réservation</Text>
+          <Text style={styles.title}>Acompte de réservation</Text>
           <Text style={styles.description}>
-            Verse 20% pour confirmer ta réservation.
+            Versez {depositPct} du montant pour confirmer votre réservation ; le solde sera réglé après le service.
           </Text>
         </View>
 
@@ -202,7 +209,7 @@ export default function PaiementScreen() {
               <View
                 style={[
                   styles.progressFill,
-                  { width: `${(depositAmount / totalAmount) * 100}%` },
+                  { width: `${totalAmount > 0 ? (depositAmount / totalAmount) * 100 : 0}%` },
                 ]}
               />
             </View>

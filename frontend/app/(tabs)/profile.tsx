@@ -10,6 +10,7 @@ import { useAuth } from '@/src/contexts/AuthContext';
 import { Colors } from '@/constants/Colors';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
+import { usePricing } from '@/contexts/PricingContext';
 import ErrorService from '@/src/services/errorService';
 
 // ✅ CheckBox local
@@ -32,6 +33,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const toast = useToast();
+  const { pricing } = usePricing();
 
   // ✅ États profil aidant
   const [genre, setGenre] = useState('');
@@ -142,7 +144,7 @@ export default function ProfileScreen() {
         genre,
         secteur,
         experience: expNum,
-        tarifHeure: 22, // Tarif fixe
+        tarifHeure: pricing.hourlyRate, // Tarif unique de la plateforme (config/pricing)
         description,
         isAidant: true,
       };
@@ -290,7 +292,7 @@ export default function ProfileScreen() {
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: theme.text }]}>Tarif horaire</Text>
             <View style={[styles.input, styles.tarifFixe, { backgroundColor: theme.background, borderColor: theme.border }]}>
-              <Text style={styles.tarifFixeText}>22€/heure</Text>
+              <Text style={styles.tarifFixeText}>{pricing.hourlyRate} €/heure</Text>
               <Text style={[styles.tarifFixeNote, { color: theme.textSecondary }]}>Tarif fixe de la plateforme</Text>
             </View>
           </View>

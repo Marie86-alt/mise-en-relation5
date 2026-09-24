@@ -23,6 +23,8 @@ import { Timestamp, type DocumentData } from 'firebase/firestore';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
+import { usePricing } from '@/contexts/PricingContext';
+import { formatRate } from '@/src/config/pricingConfig';
 import { chatService, type Message, type StatutServiceType } from '@/src/services/firebase/chatService';
 import { avisService } from '@/src/services/firebase/avisService';
 import { PricingService, type PricingResult } from '@/src/utils/pricing';
@@ -40,6 +42,7 @@ export default function ConversationScreen() {
   const { user } = useAuth();
   const { theme } = useTheme();
   const toast = useToast();
+  const { pricing: pricingConfig } = usePricing();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const flatListRef = useRef<FlatList<Message>>(null);
 
@@ -95,11 +98,11 @@ export default function ConversationScreen() {
   // --- tarification
   const pricing: PricingResult | null = useMemo(() => {
     if (!details.heureDebut || !details.heureFin) return null;
-    return PricingService.calculatePriceFromTimeRangeSafe(details.heureDebut, details.heureFin, 1);
-  }, [details.heureDebut, details.heureFin]);
+    return PricingService.calculatePriceFromTimeRangeSafe(details.heureDebut, details.heureFin, 1, pricingConfig);
+  }, [details.heureDebut, details.heureFin, pricingConfig]);
   const pricingError = pricing?.error ?? null;
   const total = pricing && !pricing.error ? pricing.finalPrice : 0;
-  const amounts = total > 0 ? calculatePaymentAmounts(total, 'deposit') : null;
+  const amounts = total > 0 ? calculatePaymentAmounts(total, 'deposit', pricingConfig.depositRate) : null;
 
   // --- créer/rejoindre la conversation
   useEffect(() => {
@@ -237,6 +240,7 @@ export default function ConversationScreen() {
         clientId: user.uid,
         pricingData: { ...pricing },
         serviceDetails: { ...details, adresse: adresseService.trim() },
+        depositRate: pricingConfig.depositRate,
         isDeposit: true,
       };
       router.push({
@@ -323,6 +327,7 @@ export default function ConversationScreen() {
       clientId: user.uid,
       pricingData: { ...pricing, finalPrice: amounts?.finalAmountEur ?? 0 },
       serviceDetails: details,
+      depositRate: pricingConfig.depositRate,
       isDeposit: false,
     };
     router.push({
@@ -620,7 +625,7 @@ export default function ConversationScreen() {
             {amounts ? (
               <View style={styles.modalPricing}>
                 <View style={styles.modalRow}><Text style={styles.modalLabel}>Montant total</Text><Text style={styles.modalValue}>{fmt(amounts.totalAmountEur)}</Text></View>
-                <View style={styles.modalRow}><Text style={styles.modalLabel}>Acompte (20 %)</Text><Text style={styles.modalTotalValue}>{fmt(amounts.depositAmountEur)}</Text></View>
+                <View style={styles.modalRow}><Text style={styles.modalLabel}>Acompte ({formatRate(amounts.depositRate)})</Text><Text style={styles.modalTotalValue}>{fmt(amounts.depositAmountEur)}</Text></View>
                 <View style={styles.modalRow}><Text style={styles.modalLabel}>Solde après le service</Text><Text style={styles.modalValue}>{fmt(amounts.finalAmountEur)}</Text></View>
               </View>
             ) : null}

@@ -11,7 +11,7 @@ import logging
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, Dict, Optional
 
-from ..config import settings
+from .pricing_config import get_pricing_config
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +58,9 @@ def build_transaction_record(intent: Dict[str, Any], server_timestamp: Any) -> D
     payment_type = str(metadata.get("type") or "")
     amount_cents = int(intent.get("amount_received") or intent.get("amount") or 0)
     montant = _cents_to_euros(amount_cents)
+    commission_rate = get_pricing_config().commission_rate
     commission = float(
-        (Decimal(str(montant)) * settings.COMMISSION_RATE).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        (Decimal(str(montant)) * commission_rate).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     )
 
     return {
@@ -72,7 +73,7 @@ def build_transaction_record(intent: Dict[str, Any], server_timestamp: Any) -> D
         "amountCents": amount_cents,
         "currency": intent.get("currency"),
         "commission": commission,
-        "commissionRate": float(settings.COMMISSION_RATE),
+        "commissionRate": float(commission_rate),
         "montantAidant": round(montant - commission, 2),
         "totalAmount": _to_float(metadata.get("totalAmount")),
         "status": "completed",

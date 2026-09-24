@@ -15,6 +15,7 @@ import { STRIPE_CONFIG } from '@/src/config/stripe';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { ThemeProvider as CustomThemeProvider } from '@/contexts/ThemeContext';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { PricingProvider } from '@/contexts/PricingContext';
 import { useTheme } from '@/hooks/useTheme';
 
 applyTextInputDefaults();
@@ -135,17 +136,19 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <StripeProvider publishableKey={STRIPE_CONFIG.PUBLISHABLE_KEY}>
         <AuthProvider>
-          <CustomThemeProvider>
-            <ToastProvider>
-              <ThemeProvider value={DefaultTheme}>
-                <RootLayoutNav />
-                <StatusBar
-                  style={colorScheme === 'dark' ? 'light' : 'dark'}
-                  translucent={Platform.OS === 'android'}
-                />
-              </ThemeProvider>
-            </ToastProvider>
-          </CustomThemeProvider>
+          <PricingProvider>
+            <CustomThemeProvider>
+              <ToastProvider>
+                <ThemeProvider value={DefaultTheme}>
+                  <RootLayoutNav />
+                  <StatusBar
+                    style={colorScheme === 'dark' ? 'light' : 'dark'}
+                    translucent={Platform.OS === 'android'}
+                  />
+                </ThemeProvider>
+              </ToastProvider>
+            </CustomThemeProvider>
+          </PricingProvider>
         </AuthProvider>
       </StripeProvider>
     </SafeAreaProvider>

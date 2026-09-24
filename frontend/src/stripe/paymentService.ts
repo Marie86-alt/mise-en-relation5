@@ -27,6 +27,8 @@ export interface PaymentData {
     heureFin?: string;
     adresse?: string;
   };
+  /** Taux d'acompte issu de config/pricing au moment de la réservation (défaut : 20 %) */
+  depositRate?: number;
 }
 
 type InitResult =
@@ -43,7 +45,7 @@ async function initializeDepositPayment(data: PaymentData): Promise<InitResult> 
     const total = Number(data.pricingData?.finalPrice || 0);
     if (!total || total <= 0) throw new Error('Montant invalide');
 
-    const amounts = calculatePaymentAmounts(total, 'deposit');
+    const amounts = calculatePaymentAmounts(total, 'deposit', data.depositRate);
 
     const dep = await HttpPaymentService.createPaymentIntent(
       amounts.currentAmountCents,
@@ -56,6 +58,7 @@ async function initializeDepositPayment(data: PaymentData): Promise<InitResult> 
         serviceDetails: data.serviceDetails ?? null,
         totalAmount: total,
         depositAmount: amounts.depositAmountEur,
+        depositRate: amounts.depositRate,
       }
     );
 
@@ -91,7 +94,7 @@ async function initializeFinalPayment(data: PaymentData): Promise<InitResult> {
     const total = Number(data.pricingData?.finalPrice || 0);
     if (!total || total <= 0) throw new Error('Montant invalide');
 
-    const amounts = calculatePaymentAmounts(total, 'final');
+    const amounts = calculatePaymentAmounts(total, 'final', data.depositRate);
 
     const fin = await HttpPaymentService.createPaymentIntent(
       amounts.currentAmountCents,
@@ -103,6 +106,7 @@ async function initializeFinalPayment(data: PaymentData): Promise<InitResult> {
         aidantId: data.aidantId,
         totalAmount: total,
         finalAmount: amounts.finalAmountEur,
+        depositRate: amounts.depositRate,
       }
     );
 

@@ -35,7 +35,8 @@ Le projet est **fonctionnel et proprement structuré** pour un MVP. Les trois po
 | 3.10 Admin : validations listant tous les comptes | ✅ Corrigé + index | `6048ce6` |
 | 3.11 Divergence `main` / `mariecorrection` | ✅ Fusionné, une seule branche | `0b78af2` |
 | 3.12 Divers UI (bordure debug, accents, placeholders) | ✅ Corrigé | `e9293e9` |
-| 3.4 Tarifs en dur · 3.6 Stats avis · 3.7 Cascade suppression | ⬜ À faire | — |
+| 3.4 Tarifs et commission codés en dur | ✅ Corrigé : document `config/pricing` lu par l'app (temps réel) et le backend (cache 60 s), onglet Admin → Tarifs (`docs/TARIFS.md`) | commit `config-pricing` |
+| 3.6 Stats avis · 3.7 Cascade suppression | ⬜ À faire | — |
 
 ---
 

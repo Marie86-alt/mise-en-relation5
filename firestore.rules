@@ -139,6 +139,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Configuration de la plateforme (tarifs…) : lue par l'app, modifiée par les administrateurs
+    match /config/{docId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

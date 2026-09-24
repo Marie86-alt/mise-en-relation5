@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
+import { usePricing } from '@/contexts/PricingContext';
 import { Chip } from '@/components/ui/Chip';
 import { PricingService } from '@/src/utils/pricing';
 import type { ThemeColors } from '@/constants/themes';
@@ -93,6 +94,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const toast = useToast();
+  const { pricing: pricingConfig } = usePricing();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [secteur, setSecteur] = useState<string | null>(null);
@@ -112,8 +114,14 @@ export default function HomeScreen() {
     return creneaux.filter((m) => m >= limite);
   }, [creneaux, jourIndex]);
 
+  // Durées proposées : jamais en dessous du minimum configuré par la plateforme
+  const durees = useMemo(() => {
+    const list = DUREES_HEURES.filter((h) => h >= pricingConfig.minHours);
+    return list.length > 0 ? list : [pricingConfig.minHours];
+  }, [pricingConfig.minHours]);
+
   const finMin = debutMin !== null && dureeH !== null ? debutMin + dureeH * 60 : null;
-  const pricing = dureeH !== null ? PricingService.calculatePrice(dureeH) : null;
+  const pricing = dureeH !== null ? PricingService.calculatePrice(dureeH, pricingConfig) : null;
 
   const selectJour = (index: number) => {
     setJourIndex(index);
@@ -255,8 +263,8 @@ export default function HomeScreen() {
       <View style={styles.section}>
         <FieldLabel icon="hourglass-outline" text="Pour combien de temps ?" />
         <View style={styles.wrapRow}>
-          {DUREES_HEURES.map((h) => {
-            const prix = PricingService.calculatePrice(h);
+          {durees.map((h) => {
+            const prix = PricingService.calculatePrice(h, pricingConfig);
             const tropTard = debutMin !== null && debutMin + h * 60 > FIN_MAX_MIN;
             return (
               <Chip
@@ -271,7 +279,7 @@ export default function HomeScreen() {
           })}
         </View>
         <Text style={styles.hintText}>
-          Durée minimum : 2 h. Tarif {formatEuros(PricingService.calculatePrice(2).hourlyRate)} de l&apos;heure.
+          Durée minimum : {pricingConfig.minHours} h. Tarif {formatEuros(pricingConfig.hourlyRate)} de l&apos;heure.
         </Text>
       </View>
 

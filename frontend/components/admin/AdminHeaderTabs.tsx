@@ -60,8 +60,8 @@ export function AdminHeaderTabs({
     styles,
     theme,
 }: {
-    tab: 'validations' | 'users' | 'conversations' | 'stats';
-    setTab: (t: 'validations' | 'users' | 'conversations' | 'stats') => void;
+    tab: 'validations' | 'users' | 'conversations' | 'stats' | 'tarifs';
+    setTab: (t: 'validations' | 'users' | 'conversations' | 'stats' | 'tarifs') => void;
     pendingCount: number;
     usersCount: number;
     conversationsCount: number;
@@ -103,6 +103,13 @@ export function AdminHeaderTabs({
                                         active={tab === 'stats'}
                               onPress={() => setTab('stats')}
                               label="📊 Stats"
+                              styles={styles}
+                                        theme={theme}
+                                      />
+                            <TabBtn
+                                        active={tab === 'tarifs'}
+                              onPress={() => setTab('tarifs')}
+                              label="Tarifs"
                               styles={styles}
                                         theme={theme}
                                       />

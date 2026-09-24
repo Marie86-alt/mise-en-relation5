@@ -16,6 +16,8 @@ import { Colors } from '@/constants/Colors';
 import { useToast } from '@/contexts/ToastContext';
 import { STRIPE_CONFIG } from '../src/config/stripe';
 import { PaymentData, PaymentService } from '../src/stripe/paymentService';
+import { calculatePaymentAmounts } from '../src/stripe/paymentAmounts';
+import { formatRate } from '../src/config/pricingConfig';
 
 const fmt = (n: number) => `${n.toFixed(2).replace('.', ',')} €`;
 const r2 = (n: number) => parseFloat(n.toFixed(2));
@@ -70,9 +72,10 @@ export default function PaiementFinalScreen() {
     // - sinon, on garde la valeur reçue (on suppose qu'elle est le total)
     const totalCanonical = totalFromBase > 0 ? totalFromBase : incomingFinal;
 
-    // Montants attendus
-    const depositEuros = r2(totalCanonical * 0.20);
-    const finalAmountEuros = r2(totalCanonical - depositEuros);
+    // Montants attendus (même répartition que paymentService et que le serveur)
+    const breakdown = totalCanonical > 0 ? calculatePaymentAmounts(totalCanonical, 'final', paymentData?.depositRate) : null;
+    const depositEuros = breakdown?.depositAmountEur ?? 0;
+    const finalAmountEuros = breakdown?.finalAmountEur ?? 0;
 
     // On force le service Stripe à utiliser le TOTAL canonique
     const normalizedPaymentData: PaymentData | null = paymentData
@@ -178,7 +181,7 @@ export default function PaiementFinalScreen() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>🧾 Récapitulatif du paiement</Text>
             <Row label="Coût total du service" value={fmt(totalCanonical)} />
-            <Row label="Acompte déjà versé (20%)" value={`-${fmt(depositEuros)}`} />
+            <Row label={`Acompte déjà versé (${formatRate(paymentData.depositRate ?? 0.2)})`} value={`-${fmt(depositEuros)}`} />
             <View style={styles.separator} />
             <View style={styles.currentRow}>
               <Text style={styles.currentLabel}>SOLDE À PAYER</Text>

@@ -21,6 +21,7 @@ from ..services.payment_records import (
     record_payment_intent_failed,
     record_payment_intent_succeeded,
 )
+from ..services.pricing_config import get_pricing_config
 
 router = APIRouter(prefix="/payments")
 compat_router = APIRouter()
@@ -76,7 +77,9 @@ def _calculate_authoritative_amount(body: PaymentIntentCreate) -> int:
     if total_amount <= 0:
         raise HTTPException(status_code=400, detail="Invalid total payment amount")
 
-    deposit_cents = _euros_to_cents(total_amount * settings.DEPOSIT_RATE)
+    # Taux d'acompte : config/pricing (Firestore), sinon DEPOSIT_RATE de l'environnement
+    deposit_rate = get_pricing_config().deposit_rate
+    deposit_cents = _euros_to_cents(total_amount * deposit_rate)
     total_cents = _euros_to_cents(total_amount)
 
     if payment_type == "deposit":

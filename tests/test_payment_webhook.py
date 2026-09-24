@@ -2,10 +2,12 @@
 Tests du webhook Stripe : signature, idempotence et écritures Firestore (Firestore simulé).
 """
 
+from decimal import Decimal
+
 import stripe
 
 from app.routes import payments
-from app.services import payment_records
+from app.services import payment_records, pricing_config
 
 SERVER_TS = "SERVER_TIMESTAMP"
 
@@ -75,7 +77,11 @@ def make_intent(payment_type="deposit", intent_id="pi_123", amount=1200):
 
 # --------------------------------------------------------------------------- service d'enregistrement
 def test_deposit_creates_transaction_service_and_updates_conversation(monkeypatch):
-    monkeypatch.setattr(payment_records.settings, "COMMISSION_RATE", payment_records.Decimal("0.40"))
+    monkeypatch.setattr(
+        payment_records,
+        "get_pricing_config",
+        lambda: pricing_config.PricingConfig(Decimal("22"), 2, Decimal("0.20"), Decimal("0.40"), "test"),
+    )
     db = FakeDb({"conversations/client_aidant": {"status": "acompte_en_cours", "participants": ["client", "aidant"]}})
 
     result = payment_records.record_payment_intent_succeeded(db, make_intent("deposit"), SERVER_TS)

@@ -7,6 +7,7 @@ import { useAuth } from '@/src/contexts/AuthContext';
 import { Colors } from '@/constants/Colors';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
+import { usePricing } from '@/contexts/PricingContext';
 
 import {
   collection,
@@ -33,6 +34,7 @@ import { UsersTab } from '@/components/admin/UsersTab';
 import { ConversationsTab } from '@/components/admin/ConversationsTab';
 import { MessagesModal } from '@/components/admin/MessagesModal';
 import { StatsTab } from '@/components/admin/StatsTab';
+import { PricingTab } from '@/components/admin/PricingTab';
 
 import type { UserRow, ConversationRow, MessageRow, StatsUI } from '@/components/admin/AdminTypes';
 import { s } from '@/components/admin/adminStyles';
@@ -40,7 +42,8 @@ import { s } from '@/components/admin/adminStyles';
 export default function AdminScreen() {
   const { isAdmin, loading, user: adminUser } = useAuth();
   const { theme } = useTheme();
-  const [tab, setTab] = useState<'validations' | 'users' | 'conversations' | 'stats'>('validations');
+  const { pricing } = usePricing();
+  const [tab, setTab] = useState<'validations' | 'users' | 'conversations' | 'stats' | 'tarifs'>('validations');
 
   const [pending, setPending] = useState<UserRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -300,8 +303,7 @@ export default function AdminScreen() {
     setLoadingStats(true);
 
     try {
-      const data = await statisticsService.calculateStats();
-      console.log('LOG STATS RAW', data);
+      const data = await statisticsService.calculateStats(pricing.commissionRate);
 
       setStats({
         totalUsers: (data.totalAidants ?? 0) + (data.totalClients ?? 0),
@@ -341,7 +343,7 @@ export default function AdminScreen() {
     } finally {
       setLoadingStats(false);
     }
-  }, [isAdmin, users, conversations, toast]);
+  }, [isAdmin, users, conversations, toast, pricing.commissionRate]);
 
   useEffect(() => {
     if (tab === 'stats' && isAdmin) {
@@ -406,6 +408,8 @@ export default function AdminScreen() {
       )}
 
       {tab === 'stats' && <StatsTab stats={stats} loadingStats={loadingStats} onRefresh={calculateStats} styles={s} />}
+
+      {tab === 'tarifs' && <PricingTab theme={theme} />}
 
       <MessagesModal
         visible={showMessagesModal}
