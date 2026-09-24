@@ -50,6 +50,10 @@ Copier le **secret de signature** (`whsec_…`) → variable Railway `STRIPE_WEB
 firebase deploy --only firestore:rules,firestore:indexes
 ```
 
+Si la commande propose de **supprimer des index** « définis dans le projet mais absents du fichier »,
+répondre **Non** : un index existant est peut-être utilisé par une version publiée de l'application.
+L'ajouter au fichier `firestore.indexes.json` vaut mieux que le supprimer.
+
 ## 5. Authentification obligatoire — calendrier
 
 L'application publiée (1.0.2) n'envoie **pas** de token Firebase au backend. Tant qu'elle est en
