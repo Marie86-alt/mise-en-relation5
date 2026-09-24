@@ -1,14 +1,12 @@
 // frontend/app/(tabs)/admin.tsx
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import {
-  View, Text, ActivityIndicator, TouchableOpacity,
-  StyleSheet, FlatList, Alert, TextInput, Modal, ScrollView
-} from 'react-native';
+import { View, Text, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { Colors } from '@/constants/Colors';
 import { useTheme } from '@/hooks/useTheme';
+import { useToast } from '@/contexts/ToastContext';
 
 import {
   collection,
@@ -66,12 +64,7 @@ export default function AdminScreen() {
   });
 
   const [loadingStats, setLoadingStats] = useState(false);
-
-  useEffect(() => {
-    if (!loading && !isAdmin) {
-      Alert.alert('Accès refusé', 'Réservé aux administrateurs.');
-    }
-  }, [loading, isAdmin]);
+  const toast = useToast();
 
   // ---- Abonnement : profils à valider ----
   useEffect(() => {
@@ -170,9 +163,9 @@ export default function AdminScreen() {
     try {
       await updateDoc(doc(db, 'users', targetUid), { isVerified: true });
       await logAdminAction('VERIFY_AIDANT', targetUid);
-      Alert.alert('✅ Profil vérifié', 'Le profil a été validé avec succès.');
+      toast.success('Le profil a été validé.', 'Profil vérifié');
     } catch {
-      Alert.alert('Erreur', 'Impossible de vérifier ce profil.');
+      toast.error('Impossible de vérifier ce profil.');
     }
   };
 
@@ -189,9 +182,9 @@ export default function AdminScreen() {
           try {
             await updateDoc(doc(db, 'users', u.id), { isSuspended: next });
             await logAdminAction(next ? 'SUSPEND_USER' : 'UNSUSPEND_USER', u.id);
-            Alert.alert('✅ Action effectuée', `Utilisateur ${next ? 'suspendu' : 'réactivé'} avec succès.`);
+            toast.success(`Utilisateur ${next ? 'suspendu' : 'réactivé'}.`);
           } catch {
-            Alert.alert('Erreur', 'Action impossible.');
+            toast.error('Action impossible.');
           }
         },
       },
@@ -233,10 +226,10 @@ export default function AdminScreen() {
                 displayName: u.displayName || 'Nom non renseigné',
               });
 
-              Alert.alert('✅ Utilisateur supprimé', "L'utilisateur a été désactivé et ne peut plus se connecter.");
+              toast.success("L'utilisateur a été désactivé et ne peut plus se connecter.", 'Utilisateur supprimé');
             } catch (error: any) {
-              console.log('❌ Erreur suppression utilisateur:', error?.message || error);
-              Alert.alert('Erreur', `Impossible de supprimer cet utilisateur: ${error?.message ?? 'Erreur inconnue'}`);
+              if (__DEV__) console.log('❌ Erreur suppression utilisateur:', error?.message || error);
+              toast.error(`Impossible de supprimer cet utilisateur : ${error?.message ?? 'erreur inconnue'}`);
             }
           },
         },
@@ -266,7 +259,7 @@ export default function AdminScreen() {
       setConversationMessages(messages);
       setShowMessagesModal(true);
     } catch {
-      Alert.alert('Erreur', 'Impossible de charger les messages.');
+      toast.error('Impossible de charger les messages.');
     }
   };
 
@@ -286,9 +279,9 @@ export default function AdminScreen() {
             });
 
             if (selectedConversation) loadConversationMessages(selectedConversation);
-            Alert.alert('✅ Message supprimé');
+            toast.success('Message supprimé.');
           } catch {
-            Alert.alert('Erreur', 'Impossible de supprimer ce message.');
+            toast.error('Impossible de supprimer ce message.');
           }
         },
       },
@@ -321,8 +314,8 @@ export default function AdminScreen() {
         lastUpdate: data.lastUpdate,
       });
     } catch (error) {
-      console.log('❌ Erreur chargement stats:', error);
-      Alert.alert('Erreur', 'Impossible de charger les statistiques');
+      if (__DEV__) console.log('❌ Erreur chargement stats:', error);
+      toast.error('Impossible de charger les statistiques.');
 
       // fallback basique depuis le state users/conversations
       const activeUsers = users.filter((u) => !u.isDeleted);
@@ -342,7 +335,7 @@ export default function AdminScreen() {
     } finally {
       setLoadingStats(false);
     }
-  }, [isAdmin, users, conversations]);
+  }, [isAdmin, users, conversations, toast]);
 
   useEffect(() => {
     if (tab === 'stats' && isAdmin) {

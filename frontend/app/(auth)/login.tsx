@@ -2,7 +2,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -18,10 +17,12 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
+import { useToast } from '@/contexts/ToastContext';
 import ErrorService from '@/src/services/errorService';
 import type { ThemeColors } from '@/constants/themes';
 
 export default function LoginScreen() {
+  const toast = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -43,7 +44,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
-      Alert.alert('Champs requis', 'Saisissez votre adresse e-mail et votre mot de passe.');
+      toast.error('Saisissez votre adresse e-mail et votre mot de passe.', 'Champs requis');
       return;
     }
 
@@ -52,7 +53,7 @@ export default function LoginScreen() {
       await signIn(email.trim(), password);
     } catch (error: any) {
       ErrorService.logError('LOGIN_ERROR', error?.message ?? 'Login failed', error?.code, 'error');
-      Alert.alert('Connexion impossible', ErrorService.handleFirebaseError(error));
+      toast.error(ErrorService.handleFirebaseError(error), 'Connexion impossible');
     } finally {
       setIsConnecting(false);
     }
@@ -61,30 +62,22 @@ export default function LoginScreen() {
   const handleForgotPassword = async () => {
     const trimmed = email.trim();
     if (!trimmed) {
-      Alert.alert(
-        'Adresse e-mail requise',
-        'Saisissez votre adresse e-mail ci-dessus, puis appuyez de nouveau sur « Mot de passe oublié ? ».'
-      );
+      toast.info('Saisissez votre adresse e-mail ci-dessus, puis appuyez de nouveau sur « Mot de passe oublié ? ».', 'Adresse e-mail requise');
       return;
     }
 
+    const messageEnvoye = `Si un compte existe pour ${trimmed}, un lien de réinitialisation vient de lui être envoyé. Pensez à vérifier vos courriers indésirables.`;
     setIsResetting(true);
     try {
       await resetPassword(trimmed);
-      Alert.alert(
-        'E-mail envoyé',
-        `Si un compte existe pour ${trimmed}, un lien de réinitialisation vient de lui être envoyé. Pensez à vérifier vos courriers indésirables.`
-      );
+      toast.success(messageEnvoye, 'E-mail envoyé');
     } catch (error: any) {
       ErrorService.logError('RESET_PASSWORD_ERROR', error?.message ?? 'Reset failed', error?.code, 'warning');
       if (error?.code === 'auth/user-not-found') {
         // Ne pas révéler l'existence ou non d'un compte
-        Alert.alert(
-          'E-mail envoyé',
-          `Si un compte existe pour ${trimmed}, un lien de réinitialisation vient de lui être envoyé.`
-        );
+        toast.success(messageEnvoye, 'E-mail envoyé');
       } else {
-        Alert.alert('Envoi impossible', ErrorService.handleFirebaseError(error));
+        toast.error(ErrorService.handleFirebaseError(error), 'Envoi impossible');
       }
     } finally {
       setIsResetting(false);

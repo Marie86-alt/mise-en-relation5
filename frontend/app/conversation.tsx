@@ -22,6 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Timestamp, type DocumentData } from 'firebase/firestore';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
+import { useToast } from '@/contexts/ToastContext';
 import { chatService, type Message, type StatutServiceType } from '@/src/services/firebase/chatService';
 import { avisService } from '@/src/services/firebase/avisService';
 import { PricingService, type PricingResult } from '@/src/utils/pricing';
@@ -38,6 +39,7 @@ export default function ConversationScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { theme } = useTheme();
+  const toast = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const flatListRef = useRef<FlatList<Message>>(null);
 
@@ -116,10 +118,11 @@ export default function ConversationScreen() {
         setIsConversationReady(true);
       } catch (error: any) {
         ErrorService.logError('CONVERSATION_SETUP', error?.message ?? 'setup failed', conversationId, 'error');
-        Alert.alert('Erreur', 'Impossible de charger la conversation.');
+        toast.error('Impossible de charger la conversation. Vérifiez votre connexion.');
       }
     };
     setup();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, user, stableParams.profileId, stableParams.profileName, stableParams.role]);
 
   // --- écoute du document et des messages
@@ -159,9 +162,8 @@ export default function ConversationScreen() {
       chatService
         .updateConversationMetadata(conversationId, { status: 'termine' as StatutServiceType, completedAt: new Date() })
         .catch((e: any) => ErrorService.logError('STATUS_UPDATE', e?.message, 'final', 'error'));
-      Alert.alert('✅ Service terminé', 'Le solde a été réglé. Merci pour votre confiance !', [
-        { text: 'Voir mes services', onPress: () => router.replace('/(tabs)/services') },
-      ]);
+      // Le panneau « Service terminé » (avec « Voir mes services ») s'affiche dès que le statut change.
+      toast.success('Le solde a été réglé. Merci pour votre confiance !', 'Service terminé');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, isConversationReady, rawParams.paymentSuccess, rawParams.paymentType]);
@@ -190,7 +192,7 @@ export default function ConversationScreen() {
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 50);
     } catch (e: any) {
       ErrorService.logError('SEND_MESSAGE', e?.message, conversationId, 'error');
-      Alert.alert('Erreur', "Le message n'a pas pu être envoyé.");
+      toast.error("Le message n'a pas pu être envoyé.");
     } finally {
       setLoading(false);
     }
@@ -208,7 +210,7 @@ export default function ConversationScreen() {
 
   const confirmerService = () => {
     if (adresseService.trim() === '') {
-      Alert.alert('Adresse requise', "Indiquez l'adresse où le service doit être réalisé.");
+      toast.info("Indiquez l'adresse où le service doit être réalisé.", 'Adresse requise');
       return;
     }
     setShowConfirmationModal(false);
@@ -254,7 +256,7 @@ export default function ConversationScreen() {
       });
     } catch (e: any) {
       ErrorService.logError('NAV_PAYMENT', e?.message, conversationId, 'error');
-      Alert.alert('Erreur', "Impossible d'accéder au paiement.");
+      toast.error("Impossible d'accéder au paiement. Réessayez.");
     } finally {
       setLoading(false);
     }
@@ -278,11 +280,11 @@ export default function ConversationScreen() {
 
   const envoyerAvisEtPayer = async () => {
     if (evaluation === 0) {
-      Alert.alert('Votre note', 'Choisissez une note de 1 à 5 étoiles.');
+      toast.info('Choisissez une note de 1 à 5 étoiles.', 'Votre note');
       return;
     }
     if (avisObligatoire && avisTexte.trim() === '') {
-      Alert.alert('Un mot de plus', 'Pour une note inférieure à 3 étoiles, merci de nous expliquer ce qui n’a pas convenu.');
+      toast.info('Pour une note inférieure à 3 étoiles, merci de nous expliquer ce qui n’a pas convenu.', 'Un mot de plus');
       return;
     }
     if (!user || !conversationId || !stableParams.profileId) {
@@ -305,7 +307,7 @@ export default function ConversationScreen() {
       });
     } catch (e: any) {
       ErrorService.logError('SAVE_AVIS', e?.message, conversationId, 'warning');
-      Alert.alert('Avis non enregistré', 'Nous n’avons pas pu sauvegarder votre avis, le règlement du solde continue.');
+      toast.warning('Nous n’avons pas pu sauvegarder votre avis, le règlement du solde continue.', 'Avis non enregistré');
     } finally {
       setLoading(false);
       naviguerVersPaiementFinal();

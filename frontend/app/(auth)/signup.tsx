@@ -2,7 +2,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -18,6 +17,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
+import { useToast } from '@/contexts/ToastContext';
 import ErrorService from '@/src/services/errorService';
 import type { ThemeColors } from '@/constants/themes';
 
@@ -35,6 +35,7 @@ export default function SignupScreen() {
   const { signUp, user, loading } = useAuth();
   const router = useRouter();
   const { theme } = useTheme();
+  const toast = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function SignupScreen() {
   const handleSignup = async () => {
     const validationError = validateForm();
     if (validationError) {
-      Alert.alert('Vérifiez le formulaire', validationError);
+      toast.error(validationError, 'Vérifiez le formulaire');
       return;
     }
 
@@ -64,9 +65,10 @@ export default function SignupScreen() {
     try {
       await signUp(email.trim(), password, { displayName: displayName.trim() });
       // La redirection vers les onglets est gérée par RootLayoutNav dès que `user` est défini.
+      toast.success(`Bienvenue ${displayName.trim()} !`, 'Compte créé');
     } catch (error: any) {
       ErrorService.logError('SIGNUP_ERROR', error?.message ?? 'Signup failed', error?.code, 'error');
-      Alert.alert('Inscription impossible', ErrorService.handleFirebaseError(error));
+      toast.error(ErrorService.handleFirebaseError(error), 'Inscription impossible');
     } finally {
       setIsLoading(false);
     }

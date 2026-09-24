@@ -13,15 +13,17 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { Colors } from '@/constants/Colors';
+import { useToast } from '@/contexts/ToastContext';
 import { STRIPE_CONFIG } from '../src/config/stripe';
 import { PaymentData, PaymentService } from '../src/stripe/paymentService';
 
-const fmt = (n: number) => `${n.toFixed(2)}€`;
+const fmt = (n: number) => `${n.toFixed(2).replace('.', ',')} €`;
 const r2 = (n: number) => parseFloat(n.toFixed(2));
 
 export default function PaiementFinalScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const toast = useToast();
 
   const paymentDataStr = typeof params.paymentData === 'string' ? params.paymentData : '';
   const paymentData: PaymentData | null = useMemo(() => {
@@ -111,14 +113,14 @@ export default function PaiementFinalScreen() {
         setPaymentIntentId(result.paymentIntentId);
         setPaymentReady(true);
       } else {
-        Alert.alert("Erreur d'initialisation", "Impossible d'initialiser le paiement. Veuillez réessayer.");
+        toast.error("Impossible d'initialiser le paiement. Réessayez dans quelques instants.");
       }
     } catch {
-      Alert.alert('Erreur', 'Problème de connexion au service de paiement');
+      toast.error('Impossible de contacter le serveur de paiement.');
     } finally {
       setLoading(false);
     }
-  }, [normalizedPaymentData, totalCanonical]);
+  }, [normalizedPaymentData, totalCanonical, toast]);
 
   useEffect(() => {
     if (!paymentData) {
@@ -139,21 +141,16 @@ export default function PaiementFinalScreen() {
       if (result.success) {
         const confirmResult = await PaymentService.confirmPayment(paymentIntentId);
         if (confirmResult.success) {
-          Alert.alert(
-            '✅ Paiement réussi !',
-            `Le solde de ${fmt(finalAmountEuros)} a été réglé.\n\nMerci d'avoir fait confiance à A La Case Nout Gramoun.`,
-            [{ text: 'OK', onPress: navigateBackWithSuccess }],
-          );
+          toast.success(`Le solde de ${fmt(finalAmountEuros)} a été réglé.`, 'Paiement réussi');
         } else {
-          Alert.alert('Paiement effectué', "Confirmation serveur indisponible.", [
-            { text: 'OK', onPress: navigateBackWithSuccess },
-          ]);
+          toast.warning('Paiement effectué, confirmation serveur en attente.', 'Paiement reçu');
         }
+        navigateBackWithSuccess();
       } else if (result.error) {
-        Alert.alert('Erreur de paiement', 'Le paiement n\'a pas pu être traité. Veuillez réessayer.');
+        toast.error("Le paiement n'a pas pu être traité. Réessayez.", 'Erreur de paiement');
       }
     } catch {
-      Alert.alert('Erreur', 'Problème lors du paiement');
+      toast.error('Problème lors du paiement. Réessayez.');
     } finally {
       setLoading(false);
     }

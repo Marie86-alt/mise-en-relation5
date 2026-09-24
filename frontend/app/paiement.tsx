@@ -13,15 +13,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { FullScreenLoader } from '@/components/FullScreenLoader';
+import { useToast } from '@/contexts/ToastContext';
 import { PaymentData, PaymentService } from '../src/stripe/paymentService';
 import { serviceManagement } from '../src/services/firebase/serviceManagement';
 
 // Format montant
-const formatMontant = (montant: number): string => `${montant.toFixed(2)}€`;
+const formatMontant = (montant: number): string => `${montant.toFixed(2).replace('.', ',')} €`;
 
 export default function PaiementScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const toast = useToast();
 
   const paymentDataStr = typeof params.paymentData === 'string' ? params.paymentData : '';
   const paymentData: PaymentData | null = useMemo(() => {
@@ -84,25 +86,20 @@ export default function PaiementScreen() {
     setPaymentInitializing(true);
 
     try {
-      console.log('🔄 Initialisation paiement...');
       const result = await PaymentService.initializeDepositPayment(paymentData);
 
       if (result.success && result.paymentIntentId) {
         setPaymentIntentId(result.paymentIntentId);
         setPaymentReady(true);
-        console.log('✅ Payment sheet prête');
       } else {
-        Alert.alert(
-          'Erreur',
-          "Impossible d'initialiser le paiement. Réessaie dans quelques instants."
-        );
+        toast.error("Impossible d'initialiser le paiement. Réessayez dans quelques instants.");
       }
-    } catch{
-      Alert.alert('Erreur', 'Impossible de contacter le serveur.');
+    } catch {
+      toast.error('Impossible de contacter le serveur de paiement.');
     } finally {
       setPaymentInitializing(false);
     }
-  }, [paymentData]);
+  }, [paymentData, toast]);
 
   useEffect(() => {
     if (!paymentData) {
@@ -142,16 +139,13 @@ export default function PaiementScreen() {
             result.error.message?.includes('Canceled'))
         )
       ) {
-        Alert.alert('Paiement annulé', 'Tu peux réessayer quand tu veux 🙂');
+        toast.info('Vous pouvez réessayer quand vous voulez.', 'Paiement annulé');
         return;
       }
 
       // Erreur Stripe
       if (result.error) {
-        Alert.alert(
-          'Oops 😕',
-          'Une erreur est survenue pendant le paiement. Réessaie dans quelques instants.'
-        );
+        toast.error('Une erreur est survenue pendant le paiement. Réessayez dans quelques instants.');
         return;
       }
 
@@ -168,18 +162,15 @@ export default function PaiementScreen() {
             commission: 0,
             type: 'acompte',
           });
-
-          Alert.alert(
-            '🎉 Paiement confirmé !',
-            `Ton acompte de ${formatMontant(currentAmount)} a bien été enregistré.`,
-            [{ text: 'Continuer', onPress: navigateBackWithSuccess }]
-          );
+          toast.success(`Votre acompte de ${formatMontant(currentAmount)} a bien été enregistré.`, 'Paiement confirmé');
         } else {
-          Alert.alert('Paiement ok', 'Confirmation serveur indisponible.');
+          // Le PaymentSheet a validé le paiement : on continue, la conversation se met à jour au retour.
+          toast.warning('Paiement effectué, confirmation serveur en attente.', 'Paiement reçu');
         }
+        navigateBackWithSuccess();
       }
     } catch {
-      Alert.alert('Erreur', 'Impossible de finaliser le paiement.');
+      toast.error('Impossible de finaliser le paiement.');
     } finally {
       setPaymentLoading(false);
     }

@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { Colors } from '@/constants/Colors';
 import { useTheme } from '@/hooks/useTheme';
+import { useToast } from '@/contexts/ToastContext';
 import ErrorService from '@/src/services/errorService';
 
 // ✅ CheckBox local
@@ -29,13 +30,13 @@ export default function ProfileScreen() {
   const { user, isAdmin, updateUserProfile, logout, deleteAccount } = useAuth();
   const router = useRouter();
   const { theme } = useTheme();
+  const toast = useToast();
 
   // ✅ États profil aidant
   const [genre, setGenre] = useState('');
   const [secteur, setSecteur] = useState('');
   const [showSecteurModal, setShowSecteurModal] = useState(false);
   const [experience, setExperience] = useState('');
-  const [tarif, setTarif] = useState('');
   const [description, setDescription] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -56,9 +57,6 @@ export default function ProfileScreen() {
     setSecteur(user.secteur ?? '');
     setExperience(
       typeof user.experience === 'number' ? String(user.experience) : (user.experience as any)?.toString?.() ?? ''
-    );
-    setTarif(
-      typeof user.tarifHeure === 'number' ? String(user.tarifHeure) : (user.tarifHeure as any)?.toString?.() ?? ''
     );
     setDescription(user.description ?? '');
   }, [user]);
@@ -103,15 +101,15 @@ export default function ProfileScreen() {
                   onPress: async () => {
                     try {
                       await deleteAccount();
-                      Alert.alert('Compte supprimé', 'Votre compte a été supprimé avec succès.');
+                      toast.success('Votre compte a été supprimé.', 'Compte supprimé');
                     } catch (error: any) {
                       if (error?.code === 'auth/requires-recent-login') {
-                        Alert.alert(
-                          'Reconnexion requise',
-                          'Pour des raisons de sécurité, veuillez vous déconnecter puis vous reconnecter avant de supprimer votre compte.'
+                        toast.warning(
+                          'Pour des raisons de sécurité, déconnectez-vous puis reconnectez-vous avant de supprimer votre compte.',
+                          'Reconnexion requise'
                         );
                       } else {
-                        Alert.alert('Erreur', `Impossible de supprimer le compte : ${error.message}`);
+                        toast.error(ErrorService.handleFirebaseError(error), 'Suppression impossible');
                       }
                     }
                   },
@@ -126,14 +124,14 @@ export default function ProfileScreen() {
 
   const handleSaveChanges = async () => {
     if (!genre || !secteur || !experience || !description) {
-      Alert.alert('Champs requis', 'Veuillez remplir tous les champs du profil aidant.');
+      toast.warning('Remplissez tous les champs du profil aidant.', 'Champs requis');
       return;
     }
 
     const expNum = parseInt(experience, 10);
     // Tarif fixe utilisé plus bas
     if (Number.isNaN(expNum)) {
-      Alert.alert('Format invalide', "Vérifiez l'expérience.");
+      toast.error("Les années d'expérience doivent être un nombre.", 'Format invalide');
       return;
     }
 
@@ -148,10 +146,9 @@ export default function ProfileScreen() {
         isAidant: true,
       };
       await updateUserProfile(profileData);
-      Alert.alert('Succès', 'Votre profil aidant a été mis à jour !');
+      toast.success('Votre profil aidant a été mis à jour.', 'Profil enregistré');
     } catch (error: any) {
-      const errorMessage = ErrorService.handleFirebaseError(error);
-      Alert.alert('Erreur', errorMessage);
+      toast.error(ErrorService.handleFirebaseError(error), 'Enregistrement impossible');
     } finally {
       setIsSaving(false);
     }

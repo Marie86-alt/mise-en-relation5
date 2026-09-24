@@ -1,11 +1,12 @@
 // app/contact.tsx
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
 import { useTheme } from '@/hooks/useTheme';
+import { useToast } from '@/contexts/ToastContext';
 
 const CONTACT = {
   name: 'Eva Mounoussamy',
@@ -22,138 +23,81 @@ const CONTACT = {
 
 export default function ContactScreen() {
   const { theme } = useTheme();
+  const toast = useToast();
   const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
-  // Diagnostic des URL schemes au chargement
-  useEffect(() => {
-    const checkSchemes = async () => {
-      const schemes = ['tel:', 'mailto:', 'tel:+262693464676', 'mailto:test@example.com'];
-      console.log('🔍 Diagnostic des URL schemes:');
-      
-      for (const scheme of schemes) {
-        try {
-          const can = await Linking.canOpenURL(scheme);
-          console.log(`  ${scheme} -> ${can ? '✅ Supporté' : '❌ Non supporté'}`);
-        } catch (error) {
-          console.log(`  ${scheme} -> ❌ Erreur: ${errorMessage(error)}`);
-        }
-      }
-    };
-    
-    checkSchemes();
-  }, []);
+  const copierEmail = useCallback(async () => {
+    await Clipboard.setStringAsync(CONTACT.email);
+    toast.success("L'adresse e-mail a été copiée dans le presse-papiers.", 'E-mail copié');
+  }, [toast]);
+
+  const copierNumero = useCallback(async () => {
+    await Clipboard.setStringAsync(CONTACT.phoneDisplay);
+    toast.success('Le numéro a été copié dans le presse-papiers.', 'Numéro copié');
+  }, [toast]);
+
   const handleEmailPress = useCallback(async () => {
     try {
       const url = `mailto:${CONTACT.email}?subject=Contact depuis l'app A La Case Nout Gramoun`;
-      console.log('📧 Tentative d\'ouverture email:', url);
-      
+
       // Essayer d'ouvrir directement d'abord
       try {
         await Linking.openURL(url);
-        console.log('✅ Email ouvert avec succès');
         return;
       } catch (error) {
-        console.log('❌ Ouverture directe échouée, vérification canOpenURL...', errorMessage(error));
+        if (__DEV__) console.log('Ouverture mailto directe échouée :', errorMessage(error));
       }
-      
-      // Fallback avec canOpenURL
+
+      // Repli : vérifier qu'une application sait gérer mailto:
       const can = await Linking.canOpenURL(url);
-      console.log('📧 CanOpenURL result:', can);
-      
       if (can) {
         await Linking.openURL(url);
-        console.log('✅ Email ouvert avec succès (fallback)');
       } else {
-        console.log('❌ Impossible d\'ouvrir l\'email');
         Alert.alert(
-          "Aucune application e-mail", 
-          "Vous pouvez nous contacter directement à :\n\n" + CONTACT.email,
-          [
-            { text: "Copier l'email", onPress: async () => {
-              await Clipboard.setStringAsync(CONTACT.email);
-              Alert.alert("✅ Email copié", "L'adresse email a été copiée dans le presse-papiers");
-            }},
-            { text: "OK" }
-          ]
+          'Aucune application e-mail',
+          'Vous pouvez nous écrire directement à :\n\n' + CONTACT.email,
+          [{ text: "Copier l'adresse", onPress: copierEmail }, { text: 'OK' }]
         );
       }
     } catch (error) {
       if (__DEV__) console.log('❌ Erreur email:', errorMessage(error));
       Alert.alert(
-        "Erreur",
-        "Impossible d'ouvrir l'application e-mail.\n\nVous pouvez nous contacter à :\n" + CONTACT.email,
-        [
-          { text: "Copier l'email", onPress: async () => {
-            await Clipboard.setStringAsync(CONTACT.email);
-            Alert.alert("✅ Email copié", "L'adresse email a été copiée dans le presse-papiers");
-          }},
-          { text: "OK" }
-        ]
+        "Impossible d'ouvrir l'application e-mail",
+        'Vous pouvez nous écrire à :\n' + CONTACT.email,
+        [{ text: "Copier l'adresse", onPress: copierEmail }, { text: 'OK' }]
       );
     }
-  }, []);
+  }, [copierEmail]);
 
   const handlePhonePress = useCallback(async () => {
-    console.log('🔍 Tentative d\'ouverture téléphone avec différents formats...');
-    
     // Essayer différents formats de numéros
     for (const phoneNumber of CONTACT.phoneDialAlternatives) {
       const url = `tel:${phoneNumber}`;
-      console.log(`📞 Test format: ${url}`);
-      
       try {
-        // Test direct d'abord
         const can = await Linking.canOpenURL(url);
-        console.log(`📞 CanOpenURL pour ${phoneNumber}: ${can}`);
-        
         if (can) {
           await Linking.openURL(url);
-          console.log(`✅ Téléphone ouvert avec succès (format: ${phoneNumber})`);
           return;
         }
       } catch (error) {
-        console.log(`❌ Échec format ${phoneNumber}:`, errorMessage(error));
+        if (__DEV__) console.log(`Échec format ${phoneNumber} :`, errorMessage(error));
       }
     }
-    
-    // Si aucun format ne fonctionne, essayer avec action DIAL au lieu de CALL
-    console.log('🔄 Tentative avec action DIAL...');
+
+    // Dernier essai : ouvrir le composeur sans vérification préalable
     try {
-      const dialUrl = `tel:${CONTACT.phoneDial}`;
-      // Force l'ouverture du dialer sans vérification préalable
-      await Linking.openURL(dialUrl);
-      console.log('✅ Dialer ouvert avec succès');
+      await Linking.openURL(`tel:${CONTACT.phoneDial}`);
       return;
     } catch (dialError) {
-      console.log('❌ Échec ouverture dialer:', errorMessage(dialError));
+      if (__DEV__) console.log('Échec ouverture composeur :', errorMessage(dialError));
     }
-    
-    // Fallback final avec message et copie
-    console.log('❌ Impossible d\'ouvrir le téléphone avec tous les formats');
+
     Alert.alert(
-      "Application téléphone indisponible", 
-      "Le système ne peut pas ouvrir l'application téléphone.\n\nVous pouvez nous appeler au :\n" + CONTACT.phoneDisplay,
-      [
-        { 
-          text: "Copier le numéro", 
-          onPress: async () => {
-            await Clipboard.setStringAsync(CONTACT.phoneDisplay);
-            Alert.alert("✅ Numéro copié", "Le numéro de téléphone a été copié dans le presse-papiers");
-          }
-        },
-        { 
-          text: "Réessayer", 
-          onPress: () => {
-            // Tentative de force avec l'URL système
-            Linking.openURL(`tel:${CONTACT.phoneDial}`).catch(() => {
-              console.log('❌ Réessai échoué');
-            });
-          }
-        },
-        { text: "OK" }
-      ]
+      'Application téléphone indisponible',
+      'Vous pouvez nous appeler au :\n' + CONTACT.phoneDisplay,
+      [{ text: 'Copier le numéro', onPress: copierNumero }, { text: 'OK' }]
     );
-  }, []);
+  }, [copierNumero]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>

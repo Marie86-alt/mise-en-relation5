@@ -14,6 +14,7 @@ import { applyTextInputDefaults } from '@/src/ui/applyTextInputDefaults';
 import { STRIPE_CONFIG } from '@/src/config/stripe';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { ThemeProvider as CustomThemeProvider } from '@/contexts/ThemeContext';
+import { ToastProvider } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 
 applyTextInputDefaults();
@@ -135,13 +136,15 @@ export default function RootLayout() {
       <StripeProvider publishableKey={STRIPE_CONFIG.PUBLISHABLE_KEY}>
         <AuthProvider>
           <CustomThemeProvider>
-            <ThemeProvider value={DefaultTheme}>
-              <RootLayoutNav />
-              <StatusBar
-                style={colorScheme === 'dark' ? 'light' : 'dark'}
-                translucent={Platform.OS === 'android'}
-              />
-            </ThemeProvider>
+            <ToastProvider>
+              <ThemeProvider value={DefaultTheme}>
+                <RootLayoutNav />
+                <StatusBar
+                  style={colorScheme === 'dark' ? 'light' : 'dark'}
+                  translucent={Platform.OS === 'android'}
+                />
+              </ThemeProvider>
+            </ToastProvider>
           </CustomThemeProvider>
         </AuthProvider>
       </StripeProvider>

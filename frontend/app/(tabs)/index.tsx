@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
+import { useToast } from '@/contexts/ToastContext';
 import { Chip } from '@/components/ui/Chip';
 import { PricingService } from '@/src/utils/pricing';
 import type { ThemeColors } from '@/constants/themes';
@@ -91,6 +92,7 @@ export default function HomeScreen() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const { theme } = useTheme();
+  const toast = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [secteur, setSecteur] = useState<string | null>(null);
@@ -135,7 +137,7 @@ export default function HomeScreen() {
     if (!preferenceAidant) manquants.push("votre préférence d'aidant");
 
     if (manquants.length > 0 || !secteur || jourIndex === null || debutMin === null || finMin === null) {
-      Alert.alert('Il manque une information', `Merci de choisir ${manquants.join(', ')}.`);
+      toast.warning(`Merci de choisir ${manquants.join(', ')}.`, 'Il manque une information');
       return;
     }
 
@@ -162,7 +164,7 @@ export default function HomeScreen() {
           try {
             await logout();
           } catch {
-            Alert.alert('Erreur', 'La déconnexion a échoué. Réessayez.');
+            toast.error('La déconnexion a échoué. Réessayez.');
           }
         },
       },
