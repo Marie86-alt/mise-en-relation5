@@ -26,6 +26,7 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from '@/firebase.config';
 import {Alert} from 'react-native';
+import { sanitizeUserProfileUpdates } from './authProfileUpdates';
 
 // ---------- TYPES ----------
 export interface User {
@@ -323,12 +324,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       try {
         // Synchroniser displayName côté Auth si on le met à jour
-        if (typeof updates.displayName !== 'undefined' && auth.currentUser) {
-          await updateProfile(auth.currentUser, { displayName: updates.displayName || '' });
+        const safeUpdates = sanitizeUserProfileUpdates(updates);
+
+        if (typeof safeUpdates.displayName !== 'undefined' && auth.currentUser) {
+          await updateProfile(auth.currentUser, { displayName: safeUpdates.displayName || '' });
         }
 
-        await setDoc(doc(db, 'users', user.uid), updates, { merge: true });
-        setUser((prev) => (prev ? { ...prev, ...updates } : prev));
+        await setDoc(doc(db, 'users', user.uid), safeUpdates, { merge: true });
+        setUser((prev) => (prev ? { ...prev, ...safeUpdates } : prev));
       } catch (e: any) {
         setError(e?.message ?? 'Erreur mise à jour profil');
         throw e;

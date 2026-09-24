@@ -3,17 +3,16 @@ import { Platform } from 'react-native';
 import * as Linking from 'expo-linking';
 import { PricingResult } from '../utils/pricing';
 import { HttpPaymentService } from './httpPaymentService';
+import { calculatePaymentAmounts } from './paymentAmounts';
 
 let initPaymentSheet: any;
 let presentPaymentSheet: any;
-let confirmPaymentIntent: any;
 
 if (Platform.OS !== 'web') {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const stripe = require('@stripe/stripe-react-native');
   initPaymentSheet = stripe.initPaymentSheet;
   presentPaymentSheet = stripe.presentPaymentSheet;
-  confirmPaymentIntent = stripe.confirmPayment;
 }
 
 export interface PaymentData {
@@ -37,8 +36,6 @@ type InitResult =
 type SimpleResult = { success: true } | { success: false; error: string };
 
 const RETURN_URL = Linking.createURL('payment-return');
-const r2 = (n: number) => Math.round(n * 100) / 100;
-const toCents = (amount: number) => Math.round(amount * 100);
 
 // ---------- ACOMPTE (20%) ----------
 async function initializeDepositPayment(data: PaymentData): Promise<InitResult> {
@@ -46,18 +43,19 @@ async function initializeDepositPayment(data: PaymentData): Promise<InitResult> 
     const total = Number(data.pricingData?.finalPrice || 0);
     if (!total || total <= 0) throw new Error('Montant invalide');
 
-    const depositAmountEur = r2(total * 0.2);
-    const depositAmountCents = toCents(depositAmountEur);
+    const amounts = calculatePaymentAmounts(total, 'deposit');
 
     const dep = await HttpPaymentService.createPaymentIntent(
-      depositAmountCents,
+      amounts.currentAmountCents,
       'eur',
       {
         type: 'deposit',
         conversationId: data.conversationId,
+        clientId: data.clientId,
+        aidantId: data.aidantId,
         serviceDetails: data.serviceDetails ?? null,
         totalAmount: total,
-        depositAmount: depositAmountEur,
+        depositAmount: amounts.depositAmountEur,
       }
     );
 
@@ -93,17 +91,18 @@ async function initializeFinalPayment(data: PaymentData): Promise<InitResult> {
     const total = Number(data.pricingData?.finalPrice || 0);
     if (!total || total <= 0) throw new Error('Montant invalide');
 
-    const finalAmountEur = r2(total * 0.8);
-    const finalAmountCents = toCents(finalAmountEur);
+    const amounts = calculatePaymentAmounts(total, 'final');
 
     const fin = await HttpPaymentService.createPaymentIntent(
-      finalAmountCents,
+      amounts.currentAmountCents,
       'eur',
       {
         type: 'final',
         conversationId: data.conversationId,
+        clientId: data.clientId,
+        aidantId: data.aidantId,
         totalAmount: total,
-        finalAmount: finalAmountEur,
+        finalAmount: amounts.finalAmountEur,
       }
     );
 
@@ -155,13 +154,13 @@ async function presentPayment(): Promise<SimpleResult> {
 
 async function confirmPayment(paymentIntentId: string): Promise<SimpleResult> {
   try {
-    if (Platform.OS !== 'web' && confirmPaymentIntent) {
-      const { error } = await confirmPaymentIntent(paymentIntentId);
-      if (error) {
-        return { success: false, error: error.message };
-      }
-    } else {
-      await HttpPaymentService.confirmPayment(paymentIntentId);
+    const paymentStatus = await HttpPaymentService.confirmPayment(paymentIntentId);
+
+    if (paymentStatus.status !== 'succeeded') {
+      return {
+        success: false,
+        error: `Statut de paiement invalide: ${paymentStatus.status}`,
+      };
     }
 
     return { success: true };

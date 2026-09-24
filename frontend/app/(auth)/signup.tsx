@@ -18,6 +18,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext'; // On utilise bien l'alias
 //import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { Colors } from '@/constants/Colors';
+import ErrorService from '@/src/services/errorService';
 
 
 function SignupScreen() {
@@ -72,7 +73,7 @@ function SignupScreen() {
       await (signUp as any)(email.trim(), password, additionalData);
       Alert.alert('Succès', 'Votre compte a été créé avec succès !');
     } catch (error: any) {
-      console.error('Erreur d\'inscription:', error);
+      ErrorService.logError('SIGNUP_ERROR', error?.message ?? 'Signup failed', error?.code, 'error');
       let errorMessage = 'Erreur lors de la création du compte';
       if (error.message.includes('email-already-in-use')) {
         errorMessage = 'Cette adresse email est déjà utilisée';

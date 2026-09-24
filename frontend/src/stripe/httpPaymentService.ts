@@ -1,4 +1,4 @@
-// src/stripe/httpPaymentService.ts
+import { auth } from '@/firebase.config';
 import { STRIPE_CONFIG, STRIPE_ENDPOINTS } from '../config/stripe';
 
 export interface HttpPaymentRequest {
@@ -15,33 +15,51 @@ export interface HttpPaymentResponse {
   status: string;
 }
 
-export class HttpPaymentService {
-  private static async makeRequest<T>(endpoint: string, data: any): Promise<T> {
-    const url = STRIPE_CONFIG.BACKEND_URL + endpoint;
-    
-    console.log('🔍 Requête HTTP vers:', url);
-    console.log('📤 Données envoyées:', data);
+export interface HttpPaymentStatusResponse {
+  id: string;
+  amount?: number;
+  currency?: string;
+  status: string;
+  client_secret?: string;
+  clientSecret?: string;
+}
 
-    const response = await fetch(url, {
+export class HttpPaymentService {
+  private static async getAuthHeaders(): Promise<Record<string, string>> {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return {};
+
+    try {
+      const token = await currentUser.getIdToken();
+      return { Authorization: `Bearer ${token}` };
+    } catch {
+      return {};
+    }
+  }
+
+  private static async makeRequest<T>(endpoint: string, data: any): Promise<T> {
+    const response = await fetch(STRIPE_CONFIG.BACKEND_URL + endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(await this.getAuthHeaders()),
       },
       body: JSON.stringify(data),
     });
 
-    console.log('📥 Réponse status:', response.status);
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.log('❌ Erreur HTTP:', errorText);
-      throw new Error(`Impossible de traiter le paiement`);
+      if (__DEV__) {
+        console.warn('Payment API error', {
+          endpoint,
+          status: response.status,
+          body: errorText,
+        });
+      }
+      throw new Error('Impossible de traiter le paiement');
     }
 
-    const result = await response.json();
-    console.log('✅ Réponse reçue:', result);
-    
-    return result as T;
+    return (await response.json()) as T;
   }
 
   static async createPaymentIntent(
@@ -49,37 +67,35 @@ export class HttpPaymentService {
     currency: string = 'eur',
     metadata: Record<string, any> = {}
   ): Promise<HttpPaymentResponse> {
-    // Convertir tous les objets en strings pour Stripe
     const stripeMetadata: Record<string, string> = {};
-    
+
     Object.entries(metadata).forEach(([key, value]) => {
-      if (typeof value === 'object' && value !== null) {
-        stripeMetadata[key] = JSON.stringify(value);
-      } else {
-        stripeMetadata[key] = String(value);
-      }
+      stripeMetadata[key] =
+        typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value);
     });
 
-    // Ajouter les métadonnées système
     stripeMetadata.source = 'mise-en-relation-app';
     stripeMetadata.timestamp = new Date().toISOString();
 
     return await this.makeRequest<HttpPaymentResponse>(
       STRIPE_ENDPOINTS.CREATE_PAYMENT_INTENT,
       {
-        amount, // Convertir en centimes
+        amount,
         currency,
         metadata: stripeMetadata,
       }
     );
   }
 
-  static async confirmPayment(paymentIntentId: string): Promise<any> {
-    return await this.makeRequest(
-      STRIPE_ENDPOINTS.CONFIRM_PAYMENT,
-      {
-        paymentIntentId,
-      }
-    );
+  static async confirmPayment(paymentIntentId: string): Promise<HttpPaymentStatusResponse> {
+    return await this.makeRequest(STRIPE_ENDPOINTS.CONFIRM_PAYMENT, {
+      paymentIntentId,
+    });
+  }
+
+  static async getPaymentStatus(paymentIntentId: string): Promise<HttpPaymentStatusResponse> {
+    return await this.makeRequest(STRIPE_ENDPOINTS.GET_PAYMENT_STATUS, {
+      paymentIntentId,
+    });
   }
 }

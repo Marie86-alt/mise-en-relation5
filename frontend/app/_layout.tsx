@@ -3,7 +3,6 @@ import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
-// import 'react-native-reanimated'; // Temporairement commenté pour éviter les erreurs
 import { useEffect } from 'react';
 import { Platform, View, ActivityIndicator, Text, Image } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -16,116 +15,101 @@ import { STRIPE_CONFIG } from '@/src/config/stripe';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { ThemeProvider as CustomThemeProvider } from '@/contexts/ThemeContext';
 import { useTheme } from '@/hooks/useTheme';
-// import * as SplashScreen from 'expo-splash-screen'; // Plus nécessaire
-
-// Plus de splash screen Expo - utilisation seulement de notre écran personnalisé
-
-// Intercepter les erreurs de calculatePriceFromTimeRange pour éviter les notifications
-const originalConsoleError = console.error;
-console.error = (...args) => {
-     const message = args.join(' ');
-     if (message.includes('calculatePriceFromTimeRange') ||
-          message.includes('Durée minimum') ||
-          message.includes('Duration minimum')) {
-          // Ignore silencieusement ces erreurs spécifiques
-     return;
-     }
-     originalConsoleError(...args);
-};
 
 applyTextInputDefaults();
 
-// Composant pour l'écran de chargement personnalisé
 function CustomLoadingScreen() {
-     const { theme } = useTheme();
+  const { theme } = useTheme();
 
-     return (
-          <View style={{
-               flex: 1,
-               justifyContent: 'center',
-               alignItems: 'center',
-               backgroundColor: theme.background,
-               paddingHorizontal: 20
-          }}>
-              {/* Logo de l'application */}
-               <Image
-                    source={require('../assets/images/splash-icon.png')}
-                    style={{
-                         width: 120,
-                         height: 120,
-                         marginBottom: 30,
-                    }}
-                    resizeMode="contain"
-                    />
+  return (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: theme.background,
+        paddingHorizontal: 20,
+      }}
+    >
+      <Image
+        source={require('../assets/images/splash-icon.png')}
+        style={{
+          width: 120,
+          height: 120,
+          marginBottom: 30,
+        }}
+        resizeMode="contain"
+      />
 
-              {/* Nom de l'application */}
-               <Text style={{
-               fontSize: 28,
-               fontWeight: '700',
-               color: theme.text,
-     textAlign: 'center',
-               marginBottom: 8,
-               letterSpacing: 1
-          }}>
-                    A La Case Nout Gramoun
-               </Text>
+      <Text
+        style={{
+          fontSize: 28,
+          fontWeight: '700',
+          color: theme.text,
+          textAlign: 'center',
+          marginBottom: 8,
+          letterSpacing: 1,
+        }}
+      >
+        A La Case Nout Gramoun
+      </Text>
 
-               <Text style={{
-               fontSize: 16,
-               color: theme.textSecondary,
-               textAlign: 'center',
-               marginBottom: 40,
-               fontStyle: 'italic'
-          }}>
-                    Votre plateforme de services à domicile
-               </Text>
+      <Text
+        style={{
+          fontSize: 16,
+          color: theme.textSecondary,
+          textAlign: 'center',
+          marginBottom: 40,
+          fontStyle: 'italic',
+        }}
+      >
+        Votre plateforme de services a domicile
+      </Text>
 
-               <ActivityIndicator size="large" color={theme.primary} />
+      <ActivityIndicator size="large" color={theme.primary} />
 
-               <Text style={{
-               marginTop: 16,
-               fontSize: 16,
-               color: theme.textSecondary,
-               textAlign: 'center',
-               fontWeight: '500'
-          }}>
-                    Chargement...
-               </Text>
-          </View>
-          );
+      <Text
+        style={{
+          marginTop: 16,
+          fontSize: 16,
+          color: theme.textSecondary,
+          textAlign: 'center',
+          fontWeight: '500',
+        }}
+      >
+        Chargement...
+      </Text>
+    </View>
+  );
 }
 
 function RootLayoutNav() {
- const { user, loading } = useAuth();
-     const router = useRouter();
-     const segments = useSegments();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const segments = useSegments();
 
- useEffect(() => {
-      if (loading) return;
-      const seg0 = segments?.[0]; // '(auth)', '(tabs)' ou undefined pour '/'
-            const inAuth = seg0 === '(auth)';
-      const inTabs = seg0 === '(tabs)';
-      const atLanding = seg0 === undefined;
+  useEffect(() => {
+    if (loading) return;
 
-            // LOGIQUE DE REDIRECTION SIMPLE ET FIABLE
-            // Déconnecté → va sur la landing
-            if (!user && inTabs) {
-                 router.replace('/');
-            }
-      // Connecté → onglets principaux
-            else if (user && (inAuth || atLanding)) {
-                 router.replace('/(tabs)');
-            }
- }, [user, loading, segments, router]);
+    const seg0 = segments?.[0];
+    const inAuth = seg0 === '(auth)';
+    const inTabs = seg0 === '(tabs)';
+    const atLanding = seg0 === undefined;
 
- // Utilisation du composant d'écran de chargement personnalisé
- if (loading) {
-      return <CustomLoadingScreen />;
- }
+    if (!user && inTabs) {
+      router.replace('/');
+    } else if (user && (inAuth || atLanding)) {
+      router.replace('/(tabs)');
+    }
+  }, [user, loading, segments, router]);
 
- return (
-      <ErrorBoundary>
-       <Stack>
+  if (loading) {
+    return <CustomLoadingScreen />;
+  }
+
+  return (
+    <ErrorBoundary>
+      <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -135,33 +119,32 @@ function RootLayoutNav() {
         <Stack.Screen name="profile-detail" options={{ headerShown: false }} />
         <Stack.Screen name="profile-list" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
-       </Stack>
-      </ErrorBoundary>
-      );
+      </Stack>
+    </ErrorBoundary>
+  );
 }
 
 export default function RootLayout() {
-     const colorScheme = useColorScheme();
-     const [loaded] = useFonts({ SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf') });
-     
-     if (!loaded) return null;
-     
-     return (
-          <SafeAreaProvider>
-           <StripeProvider publishableKey={STRIPE_CONFIG.PUBLISHABLE_KEY}>
-            <AuthProvider>
-             <CustomThemeProvider>
-              <ThemeProvider value={DefaultTheme}>
-               <RootLayoutNav />
-                  {/* Sur Android edge-to-edge, garde une barre lisible */}
-               <StatusBar
-                    style={colorScheme === 'dark' ? 'light' : 'dark'}
-                    translucent={Platform.OS === 'android'}
-                    />
-              </ThemeProvider>
-             </CustomThemeProvider>
-            </AuthProvider>
-           </StripeProvider>
-          </SafeAreaProvider>
-          );
+  const colorScheme = useColorScheme();
+  const [loaded] = useFonts({ SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf') });
+
+  if (!loaded) return null;
+
+  return (
+    <SafeAreaProvider>
+      <StripeProvider publishableKey={STRIPE_CONFIG.PUBLISHABLE_KEY}>
+        <AuthProvider>
+          <CustomThemeProvider>
+            <ThemeProvider value={DefaultTheme}>
+              <RootLayoutNav />
+              <StatusBar
+                style={colorScheme === 'dark' ? 'light' : 'dark'}
+                translucent={Platform.OS === 'android'}
+              />
+            </ThemeProvider>
+          </CustomThemeProvider>
+        </AuthProvider>
+      </StripeProvider>
+    </SafeAreaProvider>
+  );
 }

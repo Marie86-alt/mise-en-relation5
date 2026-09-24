@@ -31,6 +31,11 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
 }
 expoAutolinking.useExpoModules()
 
+if (findProject(':react-native-worklets') == null) {
+  include ':react-native-worklets'
+  project(':react-native-worklets').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-worklets/android')
+}
+
 rootProject.name = 'A La Case Nout Gramoun'
 
 expoAutolinking.useExpoVersionCatalog()

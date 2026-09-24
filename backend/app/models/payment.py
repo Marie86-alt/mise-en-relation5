@@ -27,3 +27,24 @@ class PaymentIntentCreate(BaseModel):
                 "metadata": {"user_id": "123", "service_id": "456"},
             }
         }
+
+
+class PaymentConfirmRequest(BaseModel):
+    """Request used by the mobile app after the PaymentSheet closes."""
+
+    paymentIntentId: str = Field(..., min_length=1)
+
+
+class PaymentStatusRequest(BaseModel):
+    """Request used to retrieve a PaymentIntent status."""
+
+    paymentIntentId: str = Field(..., min_length=1)
+
+
+class RefundRequest(BaseModel):
+    """Request used to refund a PaymentIntent."""
+
+    paymentIntentId: str = Field(..., min_length=1)
+    amount: Optional[int] = Field(
+        None, gt=0, le=999900, description="Optional refund amount in cents"
+    )

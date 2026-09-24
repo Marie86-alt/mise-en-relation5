@@ -26,6 +26,10 @@ class Settings:
     # Firebase Settings
     FIREBASE_PROJECT_ID: str = os.environ.get("FIREBASE_PROJECT_ID", "")
     SERVICE_ACCOUNT_PATH: Path = ROOT_DIR / "service-account.json"
+    PAYMENT_AUTH_REQUIRED: bool = (
+        os.environ.get("PAYMENT_AUTH_REQUIRED", "false").lower()
+        in ("1", "true", "yes")
+    )
 
     # Stripe Settings
     STRIPE_SECRET_KEY: str = os.environ.get("STRIPE_SECRET_KEY", "")

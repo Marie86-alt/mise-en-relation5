@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { Colors } from '@/constants/Colors';
 import { useTheme } from '@/hooks/useTheme';
+import ErrorService from '@/src/services/errorService';
 
 // ✅ CheckBox local
 const CheckBox = ({
@@ -106,7 +107,8 @@ export default function ProfileScreen() {
       await updateUserProfile(profileData);
       Alert.alert('Succès', 'Votre profil aidant a été mis à jour !');
     } catch (error: any) {
-      Alert.alert('Erreur', `Une erreur est survenue : ${error.message}`);
+      const errorMessage = ErrorService.handleFirebaseError(error);
+      Alert.alert('Erreur', errorMessage);
     } finally {
       setIsSaving(false);
     }
