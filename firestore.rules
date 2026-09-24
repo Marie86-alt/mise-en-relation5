@@ -92,15 +92,26 @@ service cloud.firestore {
       }
     }
 
+    // Avis : déposés via le backend (POST /api/reviews), qui recalcule la note de l'aidant.
+    // La création directe reste tolérée pour l'application publiée (1.0.2), bornée : note entière
+    // 1..5, auteur = client connecté ET participant de la conversation évaluée. À fermer
+    // (allow create: if false) quand cette version ne sera plus en circulation.
     match /avis/{avisId} {
       allow get, list: if signedIn();
-      allow create: if signedIn() && request.auth.uid == request.resource.data.clientId;
+      allow create: if signedIn()
+        && request.auth.uid == request.resource.data.clientId
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && request.resource.data.conversationId is string
+        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participants;
       allow update, delete: if isAdmin();
     }
 
+    // Notes agrégées : écrites uniquement par le serveur (le client les lit sur users.averageRating)
     match /aidant_stats/{aidantId} {
       allow get, list: if signedIn();
-      allow write: if isAdmin();
+      allow write: if false;
     }
 
     // `services` et `transactions` sont écrits UNIQUEMENT par le serveur (webhook Stripe,

@@ -8,13 +8,16 @@ from .payment import (
     PaymentStatusRequest,
     RefundRequest,
 )
+from .review import RecomputeRequest, ReviewCreate
 from .status import StatusCheck, StatusCheckCreate
 
 __all__ = [
     "PaymentConfirmRequest",
     "PaymentIntentCreate",
     "PaymentStatusRequest",
+    "RecomputeRequest",
     "RefundRequest",
+    "ReviewCreate",
     "StatusCheck",
     "StatusCheckCreate",
 ]

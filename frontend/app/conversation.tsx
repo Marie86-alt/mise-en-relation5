@@ -26,7 +26,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { usePricing } from '@/contexts/PricingContext';
 import { formatRate } from '@/src/config/pricingConfig';
 import { chatService, type Message, type StatutServiceType } from '@/src/services/firebase/chatService';
-import { avisService } from '@/src/services/firebase/avisService';
+import { reviewsApi } from '@/src/services/reviewsApi';
 import { PricingService, type PricingResult } from '@/src/utils/pricing';
 import { calculatePaymentAmounts } from '@/src/stripe/paymentAmounts';
 import ErrorService from '@/src/services/errorService';
@@ -297,21 +297,22 @@ export default function ConversationScreen() {
     }
     try {
       setLoading(true);
-      await avisService.createAvis({
+      // Le backend vérifie l'auteur, enregistre l'avis et recalcule la note de l'aidant.
+      await reviewsApi.submitReview({
         aidantId: stableParams.profileId,
-        clientId: user.uid,
         conversationId,
         rating: evaluation,
-        comment: avisTexte.trim() || 'Service satisfaisant.',
-        serviceDate: details.jour || new Date().toISOString().split('T')[0],
-        secteur: details.secteur || '',
-        dureeService: pricing?.hours ?? 0,
-        montantService: total,
-        clientName: user.displayName || 'Client anonyme',
+        comment: avisTexte.trim(),
+        serviceDate: details.jour || undefined,
+        secteur: details.secteur || undefined,
+        dureeService: pricing?.hours ?? undefined,
+        montantService: total || undefined,
+        clientName: user.displayName || undefined,
       });
+      toast.success('Merci pour votre avis !');
     } catch (e: any) {
       ErrorService.logError('SAVE_AVIS', e?.message, conversationId, 'warning');
-      toast.warning('Nous n’avons pas pu sauvegarder votre avis, le règlement du solde continue.', 'Avis non enregistré');
+      toast.warning(`${e?.message ?? 'Avis non enregistré.'} Le règlement du solde continue.`, 'Avis non enregistré');
     } finally {
       setLoading(false);
       naviguerVersPaiementFinal();

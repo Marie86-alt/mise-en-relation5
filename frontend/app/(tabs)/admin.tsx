@@ -1,7 +1,9 @@
 // frontend/app/(tabs)/admin.tsx
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { View, Text, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { reviewsApi } from '@/src/services/reviewsApi';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { Colors } from '@/constants/Colors';
@@ -67,7 +69,21 @@ export default function AdminScreen() {
   });
 
   const [loadingStats, setLoadingStats] = useState(false);
+  const [recomputing, setRecomputing] = useState(false);
   const toast = useToast();
+
+  // Recalcule les notes de tous les aidants depuis la collection `avis` (backend, admin uniquement).
+  const recalculerNotes = async () => {
+    setRecomputing(true);
+    try {
+      const result = await reviewsApi.recomputeStats();
+      toast.success(`Notes recalculées pour ${result.aidants} aidant(s).`, 'Avis');
+    } catch (error: any) {
+      toast.error(error?.message ?? 'Recalcul impossible.');
+    } finally {
+      setRecomputing(false);
+    }
+  };
 
   // ---- Abonnement : profils à valider ----
   useEffect(() => {
@@ -407,7 +423,39 @@ export default function AdminScreen() {
         />
       )}
 
-      {tab === 'stats' && <StatsTab stats={stats} loadingStats={loadingStats} onRefresh={calculateStats} styles={s} />}
+      {tab === 'stats' && (
+        <>
+          <View style={{ paddingHorizontal: 12, paddingTop: 10 }}>
+            <TouchableOpacity
+              onPress={recalculerNotes}
+              disabled={recomputing}
+              accessibilityRole="button"
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                minHeight: 44,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: theme.border,
+                backgroundColor: theme.surface,
+                opacity: recomputing ? 0.6 : 1,
+              }}
+            >
+              {recomputing ? (
+                <ActivityIndicator size="small" color={theme.primary} />
+              ) : (
+                <Ionicons name="star-half-outline" size={18} color={theme.primary} />
+              )}
+              <Text style={{ color: theme.text, fontWeight: '600' }}>
+                {recomputing ? 'Recalcul en cours…' : 'Recalculer les notes des aidants'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <StatsTab stats={stats} loadingStats={loadingStats} onRefresh={calculateStats} styles={s} />
+        </>
+      )}
 
       {tab === 'tarifs' && <PricingTab theme={theme} />}
 
