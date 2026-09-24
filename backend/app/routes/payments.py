@@ -7,15 +7,19 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Dict, Optional
 
 import stripe
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Request
 
 from ..config import settings
-from ..firebase_auth import verify_bearer_token
+from ..firebase_auth import get_firestore_client, verify_bearer_token
 from ..models import (
     PaymentConfirmRequest,
     PaymentIntentCreate,
     PaymentStatusRequest,
     RefundRequest,
+)
+from ..services.payment_records import (
+    record_payment_intent_failed,
+    record_payment_intent_succeeded,
 )
 
 router = APIRouter(prefix="/payments")
@@ -56,27 +60,30 @@ def _euros_to_cents(amount: Decimal) -> int:
 
 def _calculate_authoritative_amount(body: PaymentIntentCreate) -> int:
     """
-    Prefer server-side amount calculation when the app sends enough context.
+    Le serveur recalcule le montant à partir du total et du type de paiement ;
+    le montant envoyé par l'application doit correspondre exactement.
 
-    Existing published clients still send `amount`, so requests without payment
-    type/total metadata are accepted for backward compatibility. Newer clients
-    must match the amount derived here.
+    Les métadonnées `type` et `totalAmount` sont obligatoires : toutes les versions
+    publiées de l'application les envoient.
     """
     metadata = _metadata_to_strings(body.metadata)
     payment_type = metadata.get("type")
     total_amount = _decimal_from_metadata(metadata, "totalAmount")
 
     if not payment_type or total_amount is None:
-        logger.warning("PaymentIntent accepted without full pricing metadata")
-        return body.amount
+        raise HTTPException(status_code=400, detail="Missing pricing metadata (type, totalAmount)")
 
     if total_amount <= 0:
         raise HTTPException(status_code=400, detail="Invalid total payment amount")
 
+    deposit_cents = _euros_to_cents(total_amount * settings.DEPOSIT_RATE)
+    total_cents = _euros_to_cents(total_amount)
+
     if payment_type == "deposit":
-        expected_amount = _euros_to_cents(total_amount * Decimal("0.20"))
+        expected_amount = deposit_cents
     elif payment_type == "final":
-        expected_amount = _euros_to_cents(total_amount * Decimal("0.80"))
+        # Le solde est le complément exact de l'acompte (évite les écarts d'arrondi)
+        expected_amount = total_cents - deposit_cents
     else:
         raise HTTPException(status_code=400, detail="Invalid payment type")
 
@@ -175,6 +182,69 @@ async def _retrieve_payment_intent(
         raise HTTPException(status_code=502, detail="Payment provider unavailable")
 
 
+# ---------------------------------------------------------------------------
+# Webhook Stripe : source de vérité des paiements
+# ---------------------------------------------------------------------------
+
+HANDLED_EVENTS = {"payment_intent.succeeded", "payment_intent.payment_failed"}
+
+
+@router.post("/webhook")
+async def stripe_webhook(
+    request: Request,
+    stripe_signature: Optional[str] = Header(default=None, alias="Stripe-Signature"),
+):
+    """
+    Reçoit les événements Stripe. La signature est vérifiée avec STRIPE_WEBHOOK_SECRET ;
+    `payment_intent.succeeded` crée la transaction et met à jour service + conversation.
+    """
+    if not settings.STRIPE_WEBHOOK_SECRET:
+        raise HTTPException(status_code=503, detail="Webhook not configured")
+    if not stripe_signature:
+        raise HTTPException(status_code=400, detail="Missing Stripe-Signature header")
+
+    payload = await request.body()
+    try:
+        event = stripe.Webhook.construct_event(payload, stripe_signature, settings.STRIPE_WEBHOOK_SECRET)
+    except stripe.error.SignatureVerificationError:
+        logger.warning("Stripe webhook: invalid signature")
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid payload")
+
+    event_type = event.get("type") if isinstance(event, dict) else getattr(event, "type", None)
+    if event_type not in HANDLED_EVENTS:
+        return {"received": True, "handled": False, "type": event_type}
+
+    data = event["data"]["object"] if isinstance(event, dict) else event.data.object
+    intent = dict(data) if not isinstance(data, dict) else data
+
+    db = get_firestore_client()
+    if db is None:
+        # On répond 500 pour que Stripe réessaie plus tard (la configuration sera corrigée entre-temps)
+        logger.error("Stripe webhook: Firestore indisponible, événement %s non enregistré", event_type)
+        raise HTTPException(status_code=500, detail="Firestore unavailable")
+
+    from firebase_admin import firestore as admin_firestore
+
+    server_timestamp = admin_firestore.SERVER_TIMESTAMP
+    try:
+        if event_type == "payment_intent.succeeded":
+            result = record_payment_intent_succeeded(db, intent, server_timestamp)
+        else:
+            result = record_payment_intent_failed(db, intent, server_timestamp)
+    except Exception:
+        logger.exception("Stripe webhook: échec d'enregistrement de %s", intent.get("id"))
+        raise HTTPException(status_code=500, detail="Recording failed")
+
+    return {"received": True, "handled": True, "type": event_type, **result}
+
+
+# ---------------------------------------------------------------------------
+# Routes appelées par l'application
+# ---------------------------------------------------------------------------
+
+
 @router.post("/create-intent")
 async def create_payment_intent(
     body: PaymentIntentCreate,
@@ -194,6 +264,7 @@ async def confirm_payment_in_payments_namespace(
 
     The mobile PaymentSheet confirms the payment. This endpoint verifies and
     returns the Stripe status instead of trying to confirm the intent again.
+    L'enregistrement de la transaction est fait par le webhook, pas ici.
     """
     return await _retrieve_payment_intent(
         PaymentStatusRequest(**body.model_dump()),
@@ -215,7 +286,9 @@ async def process_refund_in_payments_namespace(
     authorization: Optional[str] = Header(default=None),
 ):
     _configure_stripe()
-    _verify_payment_auth(authorization, {})
+    # Un remboursement est une action sensible : token obligatoire quelle que soit la configuration.
+    decoded = verify_bearer_token(authorization, required=True)
+    logger.info("Refund requested by %s for %s", decoded.get("uid") if decoded else "?", body.paymentIntentId)
     try:
         payload = {"payment_intent": body.paymentIntentId}
         if body.amount is not None:
@@ -232,6 +305,12 @@ async def process_refund_in_payments_namespace(
     except Exception:
         logger.exception("Stripe refund failed")
         raise HTTPException(status_code=502, detail="Payment provider unavailable")
+
+
+# ---------------------------------------------------------------------------
+# Routes de compatibilité : utilisées par l'application publiée (1.0.2).
+# À retirer une fois que plus aucune version en circulation ne les appelle.
+# ---------------------------------------------------------------------------
 
 
 @compat_router.post("/create-payment-intent")

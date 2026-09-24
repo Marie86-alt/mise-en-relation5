@@ -103,20 +103,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // `services` et `transactions` sont écrits UNIQUEMENT par le serveur (webhook Stripe,
+    // Firebase Admin SDK, qui contourne ces règles). Le client lit ce qui le concerne.
     match /services/{serviceId} {
       allow get, list: if isAdmin()
         || (signedIn() && (
           request.auth.uid == resource.data.clientId
           || request.auth.uid == resource.data.aidantId
         ));
-      allow create: if signedIn()
-        && request.auth.uid == request.resource.data.clientId;
-      allow update: if isAdmin()
-        || (signedIn() && (
-          request.auth.uid == resource.data.clientId
-          || request.auth.uid == resource.data.aidantId
-        ));
-      allow delete: if isAdmin();
+      allow create: if false;
+      allow update, delete: if isAdmin();
     }
 
     match /transactions/{transactionId} {
@@ -125,9 +121,13 @@ service cloud.firestore {
           request.auth.uid == resource.data.clientId
           || request.auth.uid == resource.data.aidantId
         ));
-      allow create: if signedIn()
-        && request.auth.uid == request.resource.data.clientId;
-      allow update, delete: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    // Échecs de paiement tracés par le webhook : lecture admin uniquement
+    match /payment_failures/{failureId} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     match /admin_logs/{logId} {

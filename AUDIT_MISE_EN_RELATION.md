@@ -22,6 +22,21 @@ Légende sévérité : **P0** bloquant avant mise en production réelle · **P1*
 
 Le projet est **fonctionnel et proprement structuré** pour un MVP. Les trois points qui empêchent de le qualifier de « prêt pour de l'argent réel » sont tous dans le flux paiement (§3.1 à §3.3).
 
+### Suivi des corrections
+
+| Finding | État | Référence |
+|---|---|---|
+| 3.1 Webhook Stripe, écriture serveur, règles fermées | ✅ Corrigé (backend 1.1.0, `docs/DEPLOIEMENT_PAIEMENT.md`) — **à déployer** : secret webhook + compte de service sur Railway, règles Firestore | commit `paiement-webhook` |
+| 3.2 Auth paiement optionnelle | ⏳ Métadonnées de prix désormais obligatoires ; `PAYMENT_AUTH_REQUIRED=true` à activer quand l'app 1.0.2 (sans token) ne sera plus en circulation | §5 du guide de déploiement |
+| 3.3 Reversement aidants (Stripe Connect) | ⬜ Décision cliente en attente ; la commission est maintenant calculée et tracée sur chaque transaction | — |
+| 3.5 `.env` suivi, fichiers backup | ✅ Corrigé | `318c861`, `7d00608` |
+| 3.8 `conversation.tsx`, debug visible | ✅ Corrigé (stepper piloté par Firestore) | `ec03dda`, `e9293e9` |
+| 3.9 Doublons (thèmes, dateValidation), avis inventés | ✅ Corrigé | `e9293e9`, `174ee40` |
+| 3.10 Admin : validations listant tous les comptes | ✅ Corrigé + index | `6048ce6` |
+| 3.11 Divergence `main` / `mariecorrection` | ✅ Fusionné, une seule branche | `0b78af2` |
+| 3.12 Divers UI (bordure debug, accents, placeholders) | ✅ Corrigé | `e9293e9` |
+| 3.4 Tarifs en dur · 3.6 Stats avis · 3.7 Cascade suppression | ⬜ À faire | — |
+
 ---
 
 ## 2. Ce qui est bien fait

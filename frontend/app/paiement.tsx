@@ -15,7 +15,6 @@ import { Colors } from '@/constants/Colors';
 import { FullScreenLoader } from '@/components/FullScreenLoader';
 import { useToast } from '@/contexts/ToastContext';
 import { PaymentData, PaymentService } from '../src/stripe/paymentService';
-import { serviceManagement } from '../src/services/firebase/serviceManagement';
 
 // Format montant
 const formatMontant = (montant: number): string => `${montant.toFixed(2).replace('.', ',')} €`;
@@ -153,15 +152,9 @@ export default function PaiementScreen() {
       if (result.success) {
         const confirm = await PaymentService.confirmPayment(paymentIntentId);
 
+        // La transaction est enregistrée côté serveur par le webhook Stripe (source de vérité) ;
+        // l'application ne fait qu'informer et revenir à la conversation.
         if (confirm.success) {
-          await serviceManagement.createTransactionRecord({
-            serviceId: paymentData.conversationId,
-            clientId: paymentData.clientId,
-            aidantId: paymentData.aidantId,
-            montant: currentAmount,
-            commission: 0,
-            type: 'acompte',
-          });
           toast.success(`Votre acompte de ${formatMontant(currentAmount)} a bien été enregistré.`, 'Paiement confirmé');
         } else {
           // Le PaymentSheet a validé le paiement : on continue, la conversation se met à jour au retour.

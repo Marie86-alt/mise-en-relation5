@@ -1,7 +1,8 @@
 """
-Firebase authentication helpers for backend endpoints.
+Firebase Admin helpers: authentification des requêtes et accès Firestore côté serveur.
 """
 
+import json
 import logging
 from typing import Optional
 
@@ -15,6 +16,18 @@ from .config import settings
 logger = logging.getLogger(__name__)
 
 
+def _build_credentials() -> Optional[credentials.Base]:
+    """Compte de service : fichier local, sinon JSON en variable d'environnement."""
+    if settings.SERVICE_ACCOUNT_PATH.exists():
+        return credentials.Certificate(str(settings.SERVICE_ACCOUNT_PATH))
+    if settings.FIREBASE_SERVICE_ACCOUNT_JSON:
+        try:
+            return credentials.Certificate(json.loads(settings.FIREBASE_SERVICE_ACCOUNT_JSON))
+        except (ValueError, TypeError):
+            logger.exception("FIREBASE_SERVICE_ACCOUNT_JSON illisible")
+    return None
+
+
 def _ensure_firebase_app() -> bool:
     try:
         firebase_admin.get_app()
@@ -23,13 +36,12 @@ def _ensure_firebase_app() -> bool:
         pass
 
     try:
-        if settings.SERVICE_ACCOUNT_PATH.exists():
-            cred = credentials.Certificate(str(settings.SERVICE_ACCOUNT_PATH))
+        cred = _build_credentials()
+        if cred is not None:
             firebase_admin.initialize_app(cred)
         elif settings.FIREBASE_PROJECT_ID:
-            firebase_admin.initialize_app(
-                options={"projectId": settings.FIREBASE_PROJECT_ID}
-            )
+            # Suffisant pour vérifier des tokens ; insuffisant pour écrire dans Firestore.
+            firebase_admin.initialize_app(options={"projectId": settings.FIREBASE_PROJECT_ID})
         else:
             logger.warning("Firebase Admin is not configured")
             return False
@@ -37,6 +49,27 @@ def _ensure_firebase_app() -> bool:
     except Exception:
         logger.exception("Firebase Admin initialization failed")
         return False
+
+
+def has_service_account() -> bool:
+    """Vrai si des identifiants permettant d'écrire dans Firestore sont disponibles."""
+    return settings.SERVICE_ACCOUNT_PATH.exists() or bool(settings.FIREBASE_SERVICE_ACCOUNT_JSON)
+
+
+def get_firestore_client():
+    """
+    Client Firestore Admin (contourne les règles de sécurité : réservé au serveur).
+    Retourne None si Firebase n'est pas configuré avec un compte de service.
+    """
+    if not has_service_account() or not _ensure_firebase_app():
+        return None
+    try:
+        from firebase_admin import firestore
+
+        return firestore.client()
+    except Exception:
+        logger.exception("Firestore client initialization failed")
+        return None
 
 
 def verify_bearer_token(

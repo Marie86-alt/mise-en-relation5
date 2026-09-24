@@ -66,6 +66,36 @@ def test_create_payment_intent_canonical_endpoint(client, monkeypatch):
     assert response.json()["amount"] == 8000
 
 
+def test_create_payment_intent_requires_pricing_metadata(client, monkeypatch):
+    """Sans type/totalAmount, le serveur ne peut pas vérifier le montant : refus."""
+    configure_fake_stripe(monkeypatch)
+
+    response = client.post(
+        "/api/payments/create-intent",
+        json={"amount": 2000, "currency": "eur", "metadata": {"clientId": "user_123"}},
+    )
+
+    assert response.status_code == 400
+    assert "Missing pricing metadata" in response.json()["detail"]
+
+
+def test_final_amount_is_exact_complement_of_deposit(client, monkeypatch):
+    """Total 66,66 € : acompte 13,33 € (1333 c), solde 53,33 € (5333 c) — jamais 5332/5334."""
+    configure_fake_stripe(monkeypatch)
+
+    deposit = client.post(
+        "/api/payments/create-intent",
+        json={"amount": 1333, "currency": "eur", "metadata": {"type": "deposit", "totalAmount": "66.66"}},
+    )
+    final = client.post(
+        "/api/payments/create-intent",
+        json={"amount": 5333, "currency": "eur", "metadata": {"type": "final", "totalAmount": "66.66"}},
+    )
+
+    assert deposit.status_code == 200
+    assert final.status_code == 200
+
+
 def test_create_payment_intent_rejects_mismatched_amount(client, monkeypatch):
     configure_fake_stripe(monkeypatch)
 
