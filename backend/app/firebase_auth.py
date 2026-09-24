@@ -58,8 +58,7 @@ def service_account_diagnostic() -> dict:
     info["jsonValid"] = True
     key = data.get("private_key") or ""
     info["hasPrivateKey"] = bool(key)
-    info["privateKeyLooksValid"] = key.startswith("-----BEGIN PRIVATE KEY-----") and "
-" in key
+    info["privateKeyLooksValid"] = key.startswith("-----BEGIN PRIVATE KEY-----") and "\n" in key
     email = data.get("client_email") or ""
     info["clientEmailDomain"] = email.split("@", 1)[1] if "@" in email else None
     info["projectId"] = data.get("project_id")
