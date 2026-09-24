@@ -15,6 +15,59 @@ from .config import settings
 
 logger = logging.getLogger(__name__)
 
+# Dernière erreur d'initialisation (type + message court), pour le diagnostic /health/integrations
+last_init_error: Optional[str] = None
+
+
+def service_account_diagnostic() -> dict:
+    """État du compte de service sans exposer de valeur : source, JSON lisible, champs clés, projet."""
+    source = None
+    raw = None
+    if settings.SERVICE_ACCOUNT_PATH.exists():
+        source = "file"
+        try:
+            raw = settings.SERVICE_ACCOUNT_PATH.read_text(encoding="utf-8")
+        except OSError:
+            raw = None
+    elif settings.FIREBASE_SERVICE_ACCOUNT_JSON:
+        source = "env"
+        raw = settings.FIREBASE_SERVICE_ACCOUNT_JSON
+
+    info = {
+        "source": source,
+        "length": len(raw) if raw else 0,
+        "jsonValid": False,
+        "hasPrivateKey": False,
+        "privateKeyLooksValid": False,
+        "clientEmailDomain": None,
+        "projectId": None,
+        "projectMatches": None,
+        "lastInitError": last_init_error,
+    }
+    if not raw:
+        return info
+    try:
+        data = json.loads(raw)
+    except (ValueError, TypeError):
+        # Collage avec guillemets autour ou caractères d'échappement doublés ?
+        stripped = raw.strip()
+        info["wrappedInQuotes"] = stripped[:1] in ("'", '"') and stripped[-1:] == stripped[:1]
+        return info
+    if not isinstance(data, dict):
+        return info
+    info["jsonValid"] = True
+    key = data.get("private_key") or ""
+    info["hasPrivateKey"] = bool(key)
+    info["privateKeyLooksValid"] = key.startswith("-----BEGIN PRIVATE KEY-----") and "
+" in key
+    email = data.get("client_email") or ""
+    info["clientEmailDomain"] = email.split("@", 1)[1] if "@" in email else None
+    info["projectId"] = data.get("project_id")
+    info["projectMatches"] = (
+        data.get("project_id") == settings.FIREBASE_PROJECT_ID if settings.FIREBASE_PROJECT_ID else None
+    )
+    return info
+
 
 def _build_credentials() -> Optional[credentials.Base]:
     """Compte de service : fichier local, sinon JSON en variable d'environnement."""
@@ -23,9 +76,15 @@ def _build_credentials() -> Optional[credentials.Base]:
     if settings.FIREBASE_SERVICE_ACCOUNT_JSON:
         try:
             return credentials.Certificate(json.loads(settings.FIREBASE_SERVICE_ACCOUNT_JSON))
-        except (ValueError, TypeError):
+        except Exception as exc:  # noqa: BLE001 - JSON illisible, clé invalide…
+            _remember_error("credentials", exc)
             logger.exception("FIREBASE_SERVICE_ACCOUNT_JSON illisible")
     return None
+
+
+def _remember_error(stage: str, exc: Exception) -> None:
+    global last_init_error
+    last_init_error = f"{stage}: {type(exc).__name__}: {str(exc)[:160]}"
 
 
 def _ensure_firebase_app() -> bool:
@@ -46,7 +105,8 @@ def _ensure_firebase_app() -> bool:
             logger.warning("Firebase Admin is not configured")
             return False
         return True
-    except Exception:
+    except Exception as exc:  # noqa: BLE001
+        _remember_error("initialize_app", exc)
         logger.exception("Firebase Admin initialization failed")
         return False
 
@@ -67,7 +127,8 @@ def get_firestore_client():
         from firebase_admin import firestore
 
         return firestore.client()
-    except Exception:
+    except Exception as exc:  # noqa: BLE001
+        _remember_error("firestore.client", exc)
         logger.exception("Firestore client initialization failed")
         return None
 

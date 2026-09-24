@@ -68,3 +68,34 @@ def test_integrations_reports_firestore_error_type_only(client, monkeypatch):
     assert body["firestore"] == "error"
     assert body["firestoreError"] == "PermissionError"
     pricing_config.clear_cache()
+
+
+def test_service_account_diagnostic_detects_broken_json(monkeypatch):
+    from app import firebase_auth
+
+    monkeypatch.setattr(firebase_auth.settings, "FIREBASE_SERVICE_ACCOUNT_JSON", '"{not json"')
+    monkeypatch.setattr(firebase_auth.settings, "SERVICE_ACCOUNT_PATH", firebase_auth.settings.SERVICE_ACCOUNT_PATH.parent / "absent.json")
+
+    info = firebase_auth.service_account_diagnostic()
+
+    assert info["source"] == "env" and info["jsonValid"] is False
+    assert info["wrappedInQuotes"] is True
+
+
+def test_service_account_diagnostic_valid_json_without_secrets(monkeypatch):
+    from app import firebase_auth
+
+    monkeypatch.setattr(
+        firebase_auth.settings,
+        "FIREBASE_SERVICE_ACCOUNT_JSON",
+        '{"project_id":"p","client_email":"svc@p.iam.gserviceaccount.com","private_key":"-----BEGIN PRIVATE KEY-----\nabc\n"}',
+    )
+    monkeypatch.setattr(firebase_auth.settings, "FIREBASE_PROJECT_ID", "p")
+    monkeypatch.setattr(firebase_auth.settings, "SERVICE_ACCOUNT_PATH", firebase_auth.settings.SERVICE_ACCOUNT_PATH.parent / "absent.json")
+
+    info = firebase_auth.service_account_diagnostic()
+
+    assert info["jsonValid"] and info["hasPrivateKey"] and info["privateKeyLooksValid"]
+    assert info["projectMatches"] is True
+    assert info["clientEmailDomain"] == "p.iam.gserviceaccount.com"
+    assert "abc" not in str(info) and "svc@" not in str(info)

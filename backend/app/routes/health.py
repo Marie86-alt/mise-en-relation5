@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter
 
 from ..config import settings
-from ..firebase_auth import get_firestore_client, has_service_account
+from ..firebase_auth import get_firestore_client, has_service_account, service_account_diagnostic
 from ..services.pricing_config import PRICING_COLLECTION, PRICING_DOC_ID, get_pricing_config
 
 router = APIRouter()
@@ -64,6 +64,7 @@ async def integrations_check():
         "webhookSecret": bool(settings.STRIPE_WEBHOOK_SECRET),
         "paymentAuthRequired": settings.PAYMENT_AUTH_REQUIRED,
         "serviceAccount": has_service_account(),
+        "serviceAccountDiagnostic": service_account_diagnostic(),
         "firestore": firestore_status,
         "firestoreError": firestore_error,
         "pricingConfigDocument": pricing_doc_exists,
