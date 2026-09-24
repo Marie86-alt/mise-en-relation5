@@ -165,17 +165,6 @@ export default function ConversationScreen() {
     return round2(pricingData.finalPrice - getAcompteAmount());
   };
 
-  // commission 40/60 (affichage informatif)
-  const getCommissionPlateforme = () => {
-    if (!pricingData || isNaN(pricingData.finalPrice)) return 0;
-    return round2(pricingData.finalPrice * 0.40);
-  };
-
-  const getMontantAidant = () => {
-    if (!pricingData || isNaN(pricingData.finalPrice)) return 0;
-    return round2(pricingData.finalPrice * 0.60);
-  };
-
   // ----------------------------- actions -----------------------------
   const envoyerMessage = async () => {
     if (!user || !conversationId || !isConversationReady) return;
@@ -452,17 +441,8 @@ export default function ConversationScreen() {
   }, [stableParams.heureDebut, stableParams.heureFin]);
 
   const renderTarificationInfo = () => {
-    console.log('🔍 Debug renderTarificationInfo:', { 
-      pricingError, 
-      pricingData: !!pricingData,
-      serviceUnavailable: isServiceUnavailable,
-      heureDebut: stableParams.heureDebut,
-      heureFin: stableParams.heureFin
-    });
-    
     // Afficher l'erreur si service indisponible (< 2h)
     if (isServiceUnavailable || pricingError) {
-      console.log('🚨 Service indisponible - durée < 2h');
       return (
         <View style={styles.errorContainer}>
           <Text style={styles.errorTitle}>⚠️ Service indisponible</Text>
@@ -480,7 +460,6 @@ export default function ConversationScreen() {
     }
     
     if (!pricingData) {
-      console.log('🔍 Pas de pricingData, pas d\'affichage');
       return null;
     }
     return (
@@ -559,7 +538,6 @@ export default function ConversationScreen() {
             <TouchableOpacity 
               style={[styles.confirmerButton, (pricingError || isServiceUnavailable) && styles.buttonDisabled]} 
               onPress={() => {
-                console.log('🔍 Bouton cliqué:', { pricingError, unavailable: isServiceUnavailable });
                 if (!pricingError && !isServiceUnavailable) {
                   setShowConfirmationModal(true);
                 }
@@ -570,11 +548,7 @@ export default function ConversationScreen() {
                 {(pricingError || isServiceUnavailable) ? '⚠️ Service non disponible' : '✅ Confirmer le service'}
               </Text>
             </TouchableOpacity>
-            {/* Debug info */}
-            <Text style={{ fontSize: 10, color: '#666', textAlign: 'center', marginTop: 5 }}>
-              Debug: Durée moins de 2h = {isServiceUnavailable ? 'OUI' : 'NON'}
-            </Text>
-            <KeyboardAvoidingView 
+            <KeyboardAvoidingView
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
               keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
@@ -848,11 +822,6 @@ export default function ConversationScreen() {
     modalPricingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
     modalPricingLabel: { fontSize: 14, color: theme.textSecondary },
     modalPricingValue: { fontSize: 14, fontWeight: '500', color: theme.text },
-    modalCommissionSection: { backgroundColor: '#e8f4f8', padding: 15, borderRadius: 8, marginBottom: 15, borderWidth: 1, borderColor: '#b3d9e6' },
-    modalCommissionTitle: { fontSize: 16, fontWeight: 'bold', color: '#0c5d7a', marginBottom: 10 },
-    modalCommissionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-    modalCommissionLabel: { fontSize: 14, color: '#0c5d7a', flex: 1 },
-    modalCommissionValue: { fontSize: 14, fontWeight: 'bold', color: theme.primary },
     etoileButton: { padding: 5 },
     etoilePleine: { color: '#ffd700' },
     buttonDisabled: { opacity: 0.5 },
@@ -935,19 +904,6 @@ export default function ConversationScreen() {
                     <Text style={styles.totalValue}>{PricingService.formatPrice(pricingData.finalPrice)}</Text>
                   </View>
                 </View>
-
-                {/* Commission 60/40 (informatif) */}
-                <View style={styles.modalCommissionSection}>
-                  <Text style={styles.modalCommissionTitle}>💼 Répartition après service</Text>
-                  <View style={styles.modalCommissionRow}>
-                    <Text style={styles.modalCommissionLabel}>👤 L&apos;aidant recevra (60%) :</Text>
-                    <Text style={styles.modalCommissionValue}>{fmt(getMontantAidant())}</Text>
-                  </View>
-                  <View style={styles.modalCommissionRow}>
-                    <Text style={styles.modalCommissionLabel}>🏢 Commission plateforme (40%) :</Text>
-                    <Text style={styles.modalCommissionValue}>{fmt(getCommissionPlateforme())}</Text>
-                  </View>
-                </View>
               </>
             )}
             <Text style={styles.modalDescription}>
@@ -957,7 +913,8 @@ export default function ConversationScreen() {
               style={styles.adresseInput}
               value={adresseService}
               onChangeText={setAdresseService}
-              placeholder="123 Rue de la Paix, 75001 Paris"
+              placeholder="12 rue du Général de Gaulle, 97400 Saint-Denis"
+              placeholderTextColor={theme.textTertiary}
               multiline
             />
             <View style={styles.modalButtons}>

@@ -17,7 +17,7 @@ interface StatutInfo {
 }
 
 const STATUTS: Record<StatutServiceType, StatutInfo> = {
-  conversation: { label: 'En discussion', couleur: '#FF6B35', icon: '💬' },
+  conversation: { label: 'En discussion', couleur: Colors.light.primary, icon: '💬' },
   service_confirme: { label: 'Confirmé', couleur: '#3498db', icon: '🗓️' },
   acompte_paye: { label: 'Confirmé', couleur: '#3498db', icon: '🗓️' },
   en_cours: { label: 'En cours', couleur: '#27ae60', icon: '🔄' },

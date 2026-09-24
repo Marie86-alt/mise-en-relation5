@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Colors } from '@/constants/Colors';
 
 export default function Landing() {
   // Animations
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   siteNameAccent: {
-    color: '#FF6B35',
+    color: Colors.light.primary,
     fontSize: 34,
     letterSpacing: 2,
     textShadowColor: '#FFDAB9',
@@ -210,11 +211,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   badge: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: Colors.light.primary,
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 20,
-    shadowColor: '#FF6B35',
+    shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -287,11 +288,11 @@ const styles = StyleSheet.create({
   /* Boutons d'action */
   actions: { gap: 12 },
   primary: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: Colors.light.primary,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#FF6B35',
+    shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

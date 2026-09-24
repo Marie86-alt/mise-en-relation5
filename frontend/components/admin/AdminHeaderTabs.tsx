@@ -1,6 +1,7 @@
 // components/admin/AdminHeaderTabs.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
+import { Colors } from '@/constants/Colors';
 
 function TabBtn({
                   label,
@@ -31,8 +32,8 @@ function TabBtn({
             styles.tabBtn,
             active && styles.tabBtnActive,
             {
-              backgroundColor: active ? '#e67e22' : theme.surface,
-              borderColor: active ? '#e67e22' : theme.border,
+              backgroundColor: active ? Colors.light.primary : theme.surface,
+              borderColor: active ? Colors.light.primary : theme.border,
               borderWidth: 1
             }
           ]}

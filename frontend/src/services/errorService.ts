@@ -37,16 +37,16 @@ class ErrorService {
   }
 
   static handleNetworkError(error: any) {
-    let message = 'Erreur reseau inconnue.';
+    let message = 'Erreur réseau inconnue.';
 
     if (error?.message?.includes('Network')) {
-      message = 'Impossible de se connecter au serveur. Verifiez votre connexion.';
+      message = 'Impossible de se connecter au serveur. Vérifiez votre connexion.';
     } else if (error?.code === 'TIMEOUT') {
-      message = 'La requete a expire. Reessayez.';
+      message = 'La requête a expiré. Réessayez.';
     } else if (error?.status === 404) {
-      message = 'Ressource non trouvee.';
+      message = 'Ressource non trouvée.';
     } else if (error?.status === 500) {
-      message = 'Erreur serveur. Reessayez plus tard.';
+      message = 'Erreur serveur. Réessayez plus tard.';
     }
 
     this.logError('NETWORK_ERROR', error?.message ?? message, error?.code, 'error');
@@ -54,22 +54,26 @@ class ErrorService {
   }
 
   static handleFirebaseError(error: any) {
-    let message = 'Une erreur est survenue. Veuillez reessayer.';
+    let message = 'Une erreur est survenue. Veuillez réessayer.';
 
     if (
       error?.code === 'auth/user-not-found' ||
       error?.code === 'auth/wrong-password' ||
       error?.code === 'auth/invalid-credential'
     ) {
-      message = 'Email ou mot de passe incorrect.';
+      message = 'E-mail ou mot de passe incorrect.';
     } else if (error?.code === 'auth/email-already-in-use') {
-      message = 'Cette adresse email est deja utilisee.';
+      message = 'Cette adresse e-mail est déjà utilisée.';
     } else if (error?.code === 'auth/weak-password') {
-      message = 'Le mot de passe est trop faible.';
+      message = 'Le mot de passe est trop faible (6 caractères minimum).';
     } else if (error?.code === 'auth/invalid-email') {
-      message = 'Adresse email invalide.';
+      message = 'Adresse e-mail invalide.';
+    } else if (error?.code === 'auth/too-many-requests') {
+      message = 'Trop de tentatives. Patientez quelques minutes avant de réessayer.';
+    } else if (error?.code === 'auth/network-request-failed') {
+      message = 'Connexion impossible. Vérifiez votre accès Internet.';
     } else if (error?.code === 'permission-denied') {
-      message = 'Action non autorisee.';
+      message = 'Action non autorisée.';
     } else if (error?.code === 'unavailable') {
       message = 'Service temporairement indisponible.';
     }

@@ -15,6 +15,7 @@ import {
   onAuthStateChanged,
   updateProfile,
   deleteUser,
+  sendPasswordResetEmail,
   User as FirebaseUser,
 } from 'firebase/auth';
 import {
@@ -68,6 +69,7 @@ interface AuthContextType {
   ) => Promise<FirebaseUser>;
   signIn: (email: string, password: string) => Promise<FirebaseUser>;
   logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
   deleteAccount: () => Promise<void>;
   clearError: () => void;
@@ -320,6 +322,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     []
   );
 
+  // Envoi de l'e-mail de réinitialisation Firebase ; ne touche pas à `loading`
+  // pour ne pas faire clignoter l'écran de connexion.
+  const resetPassword = useCallback(async (email: string): Promise<void> => {
+    setError(null);
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+    } catch (e: any) {
+      setError(e?.message ?? 'Erreur réinitialisation du mot de passe');
+      throw e;
+    }
+  }, []);
+
   const updateUserProfile = useCallback(
     async (updates: Partial<User>): Promise<void> => {
       if (!user) throw new Error('Utilisateur non connecté');
@@ -389,11 +403,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       signUp,
       signIn,
       logout,
+      resetPassword,
       updateUserProfile,
       deleteAccount,
       clearError,
     }),
-    [user, isAdmin, loading, error, signUp, signIn, logout, updateUserProfile, deleteAccount, clearError]
+    [user, isAdmin, loading, error, signUp, signIn, logout, resetPassword, updateUserProfile, deleteAccount, clearError]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

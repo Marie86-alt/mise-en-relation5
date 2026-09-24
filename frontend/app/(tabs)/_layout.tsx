@@ -6,11 +6,13 @@ import { Colors } from '@/constants/Colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/src/contexts/AuthContext';
 
 export default function TabsLayout() {
     const insets = useSafeAreaInsets();
     const bottomPad = Math.max(insets.bottom, 8); // minimum de confort
     const { theme } = useTheme();
+    const { isAdmin } = useAuth();
 
   return (
         <Tabs
@@ -94,6 +96,8 @@ export default function TabsLayout() {
               <Tabs.Screen
                         name="admin"
                         options={{
+                                    // Onglet masqué pour les non-administrateurs (la route reste protégée dans admin.tsx)
+                                    href: isAdmin ? undefined : null,
                                     title: 'Admin',
                                     tabBarIcon: ({ color, focused }) => (
                                                   <Ionicons

@@ -99,12 +99,8 @@ export default function ProfileDetailScreen() {
       
     } catch (error) {
       if (__DEV__) console.log('⚠️ Erreur chargement avis:', error);
-      // En cas d'erreur, utiliser des avis de fallback
-      const fallbackReviews: Review[] = [
-        { id: 'fallback_1', rating: 5, comment: 'Très professionnelle et attentionnée.', clientName: 'Client anonyme' },
-        { id: 'fallback_2', rating: 4, comment: 'Ponctuelle et efficace.', clientName: 'Client anonyme' }
-      ];
-      setReviews(fallbackReviews);
+      // Pas d'avis inventés : on affiche simplement l'état vide
+      setReviews([]);
     } finally {
       setLoadingReviews(false);
     }
@@ -151,6 +147,16 @@ export default function ProfileDetailScreen() {
       stars.push(<Text key={i} style={i <= note ? styles.star : styles.emptyStar}>★</Text>);
     }
     return stars;
+  };
+
+  const getInitials = (name?: string) => {
+    if (!name) return '?';
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase())
+      .join('')
+      .slice(0, 2);
   };
 
   // 🔥 NOUVEAU : Fonction pour formater la date des avis
@@ -237,10 +243,13 @@ export default function ProfileDetailScreen() {
         </View>
 
         <View style={styles.profileSection}>
-          <Image 
-            source={{ uri: profile.photo || 'https://via.placeholder.com/150' }} 
-            style={styles.profilePhoto}
-          />
+          {profile.photo ? (
+            <Image source={{ uri: profile.photo }} style={styles.profilePhoto} />
+          ) : (
+            <View style={[styles.profilePhoto, styles.profileInitials]}>
+              <Text style={styles.profileInitialsText}>{getInitials(profile.displayName)}</Text>
+            </View>
+          )}
           <View style={styles.profileMainInfo}>
             <Text style={styles.profileName}>{profile.displayName}</Text>
             <Text style={styles.profileSector}>{profile.secteur}</Text>
@@ -337,6 +346,14 @@ const styles = StyleSheet.create({
   headerBackButtonText: { color: Colors.light.primary, fontSize: 16, fontWeight: '500' },
   profileSection: { backgroundColor: '#ffffff', padding: 20, marginBottom: 10, flexDirection: 'row', alignItems: 'center' },
   profilePhoto: { width: 80, height: 80, borderRadius: 40, marginRight: 20 },
+  profileInitials: {
+    backgroundColor: '#fdf1e6',
+    borderWidth: 3,
+    borderColor: Colors.light.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileInitialsText: { color: Colors.light.primary, fontSize: 26, fontWeight: '900', letterSpacing: 1 },
   profileMainInfo: { flex: 1 },
   profileName: { fontSize: 22, fontWeight: 'bold', color: '#2c3e50', marginBottom: 5 },
   profileSector: { fontSize: 16, color: Colors.light.primary, fontWeight: '500', marginBottom: 5 },

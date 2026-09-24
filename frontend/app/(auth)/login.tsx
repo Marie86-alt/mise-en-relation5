@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react';
+// app/(auth)/login.tsx
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -12,17 +15,23 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Colors } from '@/constants/Colors';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/contexts/AuthContext';
+import { useTheme } from '@/hooks/useTheme';
 import ErrorService from '@/src/services/errorService';
+import type { ThemeColors } from '@/constants/themes';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
-  const { signIn, user, loading: authLoading } = useAuth() as any;
+  const { signIn, resetPassword, user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -30,9 +39,11 @@ export default function LoginScreen() {
     }
   }, [user, authLoading, router]);
 
+  const busy = isConnecting || isResetting;
+
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Champs requis', 'Veuillez entrer votre email et votre mot de passe.');
+    if (!email.trim() || !password) {
+      Alert.alert('Champs requis', 'Saisissez votre adresse e-mail et votre mot de passe.');
       return;
     }
 
@@ -41,20 +52,49 @@ export default function LoginScreen() {
       await signIn(email.trim(), password);
     } catch (error: any) {
       ErrorService.logError('LOGIN_ERROR', error?.message ?? 'Login failed', error?.code, 'error');
-      Alert.alert('Erreur de connexion', 'Email ou mot de passe incorrect.');
+      Alert.alert('Connexion impossible', ErrorService.handleFirebaseError(error));
     } finally {
       setIsConnecting(false);
     }
   };
 
-  const handleSignupPress = () => {
-    router.push('/(auth)/signup');
+  const handleForgotPassword = async () => {
+    const trimmed = email.trim();
+    if (!trimmed) {
+      Alert.alert(
+        'Adresse e-mail requise',
+        'Saisissez votre adresse e-mail ci-dessus, puis appuyez de nouveau sur « Mot de passe oublié ? ».'
+      );
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      await resetPassword(trimmed);
+      Alert.alert(
+        'E-mail envoyé',
+        `Si un compte existe pour ${trimmed}, un lien de réinitialisation vient de lui être envoyé. Pensez à vérifier vos courriers indésirables.`
+      );
+    } catch (error: any) {
+      ErrorService.logError('RESET_PASSWORD_ERROR', error?.message ?? 'Reset failed', error?.code, 'warning');
+      if (error?.code === 'auth/user-not-found') {
+        // Ne pas révéler l'existence ou non d'un compte
+        Alert.alert(
+          'E-mail envoyé',
+          `Si un compte existe pour ${trimmed}, un lien de réinitialisation vient de lui être envoyé.`
+        );
+      } else {
+        Alert.alert('Envoi impossible', ErrorService.handleFirebaseError(error));
+      }
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   if (authLoading || user) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.light.primary} />
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
@@ -63,9 +103,9 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingContainer}
+        style={styles.flex}
       >
-        <View style={styles.innerContainer}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <Text style={styles.title}>Connexion</Text>
             <Text style={styles.subtitle}>Retrouvez votre compte</Text>
@@ -73,36 +113,66 @@ export default function LoginScreen() {
 
           <View style={styles.form}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>Adresse e-mail</Text>
               <TextInput
                 style={styles.input}
                 placeholder="votre@email.com"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={theme.textTertiary}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                editable={!isConnecting}
+                autoCorrect={false}
+                autoComplete="email"
+                textContentType="emailAddress"
+                editable={!busy}
+                accessibilityLabel="Adresse e-mail"
               />
             </View>
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Mot de passe</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Votre mot de passe"
-                placeholderTextColor="#9CA3AF"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                editable={!isConnecting}
-              />
+              <View style={styles.passwordRow}>
+                <TextInput
+                  style={[styles.input, styles.passwordInput]}
+                  placeholder="Votre mot de passe"
+                  placeholderTextColor={theme.textTertiary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoComplete="password"
+                  textContentType="password"
+                  editable={!busy}
+                  onSubmitEditing={handleLogin}
+                  returnKeyType="go"
+                  accessibilityLabel="Mot de passe"
+                />
+                <Pressable
+                  onPress={() => setShowPassword((v) => !v)}
+                  style={styles.eyeButton}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                >
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color={theme.textSecondary} />
+                </Pressable>
+              </View>
+
+              <TouchableOpacity
+                onPress={handleForgotPassword}
+                disabled={busy}
+                style={styles.forgotButton}
+                accessibilityRole="button"
+              >
+                <Text style={styles.forgotText}>{isResetting ? 'Envoi en cours…' : 'Mot de passe oublié ?'}</Text>
+              </TouchableOpacity>
             </View>
 
             <TouchableOpacity
-              style={[styles.loginButton, isConnecting && styles.buttonDisabled]}
+              style={[styles.loginButton, busy && styles.buttonDisabled]}
               onPress={handleLogin}
-              disabled={isConnecting}
+              disabled={busy}
+              accessibilityRole="button"
             >
               {isConnecting ? (
                 <ActivityIndicator color="#ffffff" />
@@ -114,103 +184,69 @@ export default function LoginScreen() {
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Pas encore de compte ?</Text>
-            <TouchableOpacity onPress={handleSignupPress} disabled={isConnecting}>
-              <Text style={styles.signupLink}>Creer un compte</Text>
+            <TouchableOpacity onPress={() => router.push('/(auth)/signup')} disabled={busy} accessibilityRole="link">
+              <Text style={styles.signupLink}>Créer un compte</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  keyboardAvoidingContainer: {
-    flex: 1,
-  },
-  innerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6c757d',
-    marginTop: 8,
-  },
-  form: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 25,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#34495e',
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#dfe6e9',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 10,
-    fontSize: 16,
-    color: '#11181C',
-  },
-  loginButton: {
-    backgroundColor: Colors.light.primary,
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    backgroundColor: '#a4b0be',
-  },
-  loginButtonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  footer: {
-    alignItems: 'center',
-    marginTop: 30,
-  },
-  footerText: {
-    color: '#6c757d',
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  signupLink: {
-    color: Colors.light.primary,
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-});
+const createStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.background },
+    flex: { flex: 1 },
+    scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 20 },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background },
+    header: { alignItems: 'center', marginBottom: 32 },
+    title: { fontSize: 32, fontWeight: 'bold', color: theme.text },
+    subtitle: { fontSize: 16, color: theme.textSecondary, marginTop: 8 },
+    form: {
+      backgroundColor: theme.surface,
+      borderRadius: 12,
+      padding: 24,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    inputGroup: { marginBottom: 20 },
+    label: { fontSize: 16, fontWeight: '600', color: theme.text, marginBottom: 8 },
+    input: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      paddingHorizontal: 15,
+      paddingVertical: Platform.OS === 'ios' ? 14 : 12,
+      fontSize: 16,
+      color: theme.text,
+      backgroundColor: theme.background,
+      minHeight: 48,
+    },
+    passwordRow: { flexDirection: 'row', alignItems: 'center' },
+    passwordInput: { flex: 1, paddingRight: 48 },
+    eyeButton: {
+      position: 'absolute',
+      right: 4,
+      height: 48,
+      width: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    forgotButton: { alignSelf: 'flex-end', marginTop: 10, paddingVertical: 6 },
+    forgotText: { color: theme.primary, fontSize: 15, fontWeight: '600' },
+    loginButton: {
+      backgroundColor: theme.primary,
+      paddingVertical: 15,
+      borderRadius: 8,
+      alignItems: 'center',
+      marginTop: 4,
+      minHeight: 52,
+      justifyContent: 'center',
+    },
+    buttonDisabled: { opacity: 0.6 },
+    loginButtonText: { color: '#ffffff', fontSize: 18, fontWeight: 'bold' },
+    footer: { alignItems: 'center', marginTop: 30 },
+    footerText: { color: theme.textSecondary, fontSize: 16, marginBottom: 10 },
+    signupLink: { color: theme.primary, fontWeight: 'bold', fontSize: 16, paddingVertical: 6 },
+  });

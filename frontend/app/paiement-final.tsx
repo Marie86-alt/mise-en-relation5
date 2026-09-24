@@ -141,10 +141,7 @@ export default function PaiementFinalScreen() {
         if (confirmResult.success) {
           Alert.alert(
             '✅ Paiement réussi !',
-            `Le solde de ${fmt(finalAmountEuros)} a été réglé.\n\n` +
-              `💼 Répartition sur ${fmt(totalCanonical)} :\n` +
-              `• Aidant (60%) : ${fmt(r2(totalCanonical * 0.6))}\n` +
-              `• Plateforme (40%) : ${fmt(r2(totalCanonical * 0.4))}`,
+            `Le solde de ${fmt(finalAmountEuros)} a été réglé.\n\nMerci d'avoir fait confiance à A La Case Nout Gramoun.`,
             [{ text: 'OK', onPress: navigateBackWithSuccess }],
           );
         } else {
@@ -191,23 +188,6 @@ export default function PaiementFinalScreen() {
               <Text style={styles.currentAmount}>{fmt(finalAmountEuros)}</Text>
             </View>
           </View>
-
-          <View style={[styles.card, styles.splitCard]}>
-            <Text style={styles.cardTitle}>💼 Répartition des revenus</Text>
-            <Text style={styles.infoText}>
-              Sur le montant total du service ({fmt(totalCanonical)}), les fonds seront répartis comme suit :
-            </Text>
-            <View style={styles.splitRow}>
-              <View style={styles.splitCol}>
-                <Text style={styles.splitLabel}>👤 Aidant (60%)</Text>
-                <Text style={styles.splitAidant}>{fmt(r2(totalCanonical * 0.6))}</Text>
-              </View>
-              <View style={styles.splitCol}>
-                <Text style={styles.splitLabel}>🏢 Plateforme (40%)</Text>
-                <Text style={styles.splitPlatform}>{fmt(r2(totalCanonical * 0.4))}</Text>
-              </View>
-            </View>
-          </View>
         </ScrollView>
 
         <View style={styles.actions}>
@@ -248,13 +228,6 @@ const styles = StyleSheet.create({
   currentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, marginTop: 8 },
   currentLabel: { fontSize: 16, color: '#2c3e50', fontWeight: '600' },
   currentAmount: { fontSize: 20, color: Colors.light.primary, fontWeight: '700' },
-  splitCard: { backgroundColor: '#fff8f0', borderColor: '#ffd4a3' },
-  infoText: { fontSize: 14, color: '#6c757d', marginBottom: 16, lineHeight: 20 },
-  splitRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8, gap: 12 },
-  splitCol: { flex: 1, alignItems: 'center' },
-  splitLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8 },
-  splitAidant: { fontSize: 20, fontWeight: '700', color: '#28a745' },
-  splitPlatform: { fontSize: 20, fontWeight: '700', color: Colors.light.primary },
   actions: { padding: 16, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e9ecef' },
   payButton: { backgroundColor: Colors.light.primary, paddingVertical: 14, borderRadius: 8, alignItems: 'center' },
   payButtonDisabled: { backgroundColor: '#ccc' },

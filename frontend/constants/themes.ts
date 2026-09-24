@@ -1,5 +1,8 @@
 // constants/themes.ts - Dark Mode Theme System
 // Système de thème professionnel avec light et dark mode
+// La couleur primaire (orange de la marque) est définie une seule fois dans constants/Colors.ts.
+
+import { Colors } from './Colors';
 
 export type ThemeType = 'light' | 'dark';
 
@@ -50,7 +53,7 @@ export const lightTheme: ThemeColors = {
     borderLight: '#f0f0f0',
 
     // Status colors
-    primary: '#0066cc',
+    primary: Colors.light.primary,
     success: '#10b981',
     warning: '#f59e0b',
     danger: '#ef4444',
@@ -79,7 +82,7 @@ export const darkTheme: ThemeColors = {
     borderLight: '#475569',
 
     // Status colors - Adaptées pour le contraste en dark
-    primary: '#60a5fa',
+    primary: Colors.dark.primary,
     success: '#34d399',
     warning: '#fbbf24',
     danger: '#f87171',

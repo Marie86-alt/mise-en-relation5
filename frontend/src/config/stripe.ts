@@ -33,10 +33,10 @@ export const STRIPE_ENDPOINTS = {
 };
 
 export const STRIPE_ERRORS = {
-  card_declined: 'Votre carte a ete refusee',
+  card_declined: 'Votre carte a été refusée',
   insufficient_funds: 'Fonds insuffisants sur votre carte',
-  expired_card: 'Votre carte a expire',
-  incorrect_cvc: 'Code de securite incorrect',
+  expired_card: 'Votre carte a expiré',
+  incorrect_cvc: 'Code de sécurité incorrect',
   processing_error: 'Erreur de traitement du paiement',
   network_error: 'Erreur de connexion',
   unknown_error: "Une erreur inattendue s'est produite",

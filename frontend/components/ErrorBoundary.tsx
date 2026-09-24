@@ -47,11 +47,11 @@ class ErrorBoundaryClass extends React.Component<Props, State> {
           <View style={styles.errorBox}>
             <Text style={styles.errorTitle}>Une erreur est survenue</Text>
             <Text style={styles.errorMessage}>
-              L'application n'a pas pu afficher cet ecran correctement. Veuillez reessayer.
+              L&apos;application n&apos;a pas pu afficher cet écran correctement. Veuillez réessayer.
             </Text>
 
             <TouchableOpacity style={styles.resetButton} onPress={this.handleReset}>
-              <Text style={styles.resetButtonText}>Reessayer</Text>
+              <Text style={styles.resetButtonText}>Réessayer</Text>
             </TouchableOpacity>
           </View>
         </View>
