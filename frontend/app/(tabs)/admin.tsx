@@ -70,7 +70,13 @@ export default function AdminScreen() {
   useEffect(() => {
     if (!isAdmin) return;
 
-    const qPending = query(collection(db, 'users'), where('isVerified', '==', false), orderBy('createdAt', 'desc'));
+    // Seuls les aidants ont besoin d'une validation ; les comptes « famille » n'apparaissent plus ici.
+    const qPending = query(
+      collection(db, 'users'),
+      where('isAidant', '==', true),
+      where('isVerified', '==', false),
+      orderBy('createdAt', 'desc')
+    );
     const unsub = onSnapshot(
       qPending,
       (snap) => setPending(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))),

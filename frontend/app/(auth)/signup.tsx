@@ -24,7 +24,25 @@ import type { ThemeColors } from '@/constants/themes';
 const MIN_PASSWORD_LENGTH = 6;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+type Role = 'client' | 'aidant';
+
+const ROLES: { value: Role; icon: keyof typeof Ionicons.glyphMap; title: string; description: string }[] = [
+  {
+    value: 'client',
+    icon: 'search-outline',
+    title: "Je cherche de l'aide",
+    description: 'Pour un proche ou pour moi : trouver un aidant vérifié près de chez moi.',
+  },
+  {
+    value: 'aidant',
+    icon: 'hand-left-outline',
+    title: 'Je propose mon aide',
+    description: 'Je suis aidant(e) à domicile et je souhaite recevoir des demandes.',
+  },
+];
+
 export default function SignupScreen() {
+  const [role, setRole] = useState<Role | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,6 +63,7 @@ export default function SignupScreen() {
   }, [user, loading, router]);
 
   const validateForm = (): string | null => {
+    if (!role) return "Indiquez si vous cherchez de l'aide ou si vous en proposez.";
     if (!displayName.trim()) return 'Veuillez indiquer votre nom et prénom.';
     if (!EMAIL_REGEX.test(email.trim())) return 'Veuillez saisir une adresse e-mail valide.';
     if (password.length < MIN_PASSWORD_LENGTH) {
@@ -63,9 +82,15 @@ export default function SignupScreen() {
 
     setIsLoading(true);
     try {
-      await signUp(email.trim(), password, { displayName: displayName.trim() });
+      const isAidant = role === 'aidant';
+      await signUp(email.trim(), password, { displayName: displayName.trim(), isAidant });
       // La redirection vers les onglets est gérée par RootLayoutNav dès que `user` est défini.
-      toast.success(`Bienvenue ${displayName.trim()} !`, 'Compte créé');
+      toast.success(
+        isAidant
+          ? `Bienvenue ${displayName.trim()} ! Complétez votre profil aidant pour être visible après validation.`
+          : `Bienvenue ${displayName.trim()} !`,
+        'Compte créé'
+      );
     } catch (error: any) {
       ErrorService.logError('SIGNUP_ERROR', error?.message ?? 'Signup failed', error?.code, 'error');
       toast.error(ErrorService.handleFirebaseError(error), 'Inscription impossible');
@@ -95,6 +120,37 @@ export default function SignupScreen() {
           </View>
 
           <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Vous êtes… *</Text>
+              <View style={styles.roleRow}>
+                {ROLES.map((r) => {
+                  const selected = role === r.value;
+                  return (
+                    <Pressable
+                      key={r.value}
+                      onPress={() => setRole(r.value)}
+                      disabled={isLoading}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: selected }}
+                      accessibilityLabel={`${r.title}. ${r.description}`}
+                      style={({ pressed }) => [
+                        styles.roleCard,
+                        selected && styles.roleCardSelected,
+                        pressed && { opacity: 0.85 },
+                      ]}
+                    >
+                      <Ionicons name={r.icon} size={26} color={selected ? theme.primary : theme.textSecondary} />
+                      <Text style={[styles.roleTitle, selected && { color: theme.primary }]}>{r.title}</Text>
+                      <Text style={styles.roleDescription}>{r.description}</Text>
+                      {selected ? (
+                        <Ionicons name="checkmark-circle" size={20} color={theme.primary} style={styles.roleCheck} />
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Nom et prénom *</Text>
               <TextInput
@@ -223,6 +279,20 @@ const createStyles = (theme: ThemeColors) =>
     },
     inputGroup: { marginBottom: 20 },
     label: { fontSize: 16, fontWeight: '600', color: theme.text, marginBottom: 8 },
+    roleRow: { gap: 10 },
+    roleCard: {
+      borderWidth: 1.5,
+      borderColor: theme.border,
+      borderRadius: 12,
+      padding: 14,
+      backgroundColor: theme.background,
+      gap: 6,
+      minHeight: 88,
+    },
+    roleCardSelected: { borderColor: theme.primary, backgroundColor: theme.surfaceSecondary },
+    roleTitle: { fontSize: 16, fontWeight: '700', color: theme.text },
+    roleDescription: { fontSize: 13, color: theme.textSecondary, lineHeight: 18 },
+    roleCheck: { position: 'absolute', top: 12, right: 12 },
     input: {
       borderWidth: 1,
       borderColor: theme.border,

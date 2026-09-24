@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useMemo,
   useCallback,
+  useRef,
   useState,
   ReactNode,
 } from 'react';
@@ -96,6 +97,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Données saisies à l'inscription (nom, rôle…) en attente d'être écrites dans le document
+  // utilisateur. Le document est créé UNE SEULE FOIS, par ensureUserDoc ci-dessous : les règles
+  // Firestore n'autorisent le propriétaire qu'à créer un doc complet, puis à modifier quelques
+  // champs — une seconde écriture depuis signUp (createdAt, role…) serait refusée.
+  const pendingSignupRef = useRef<Partial<User> | null>(null);
+
   // ---- Abonnement à la session + ensureUserDoc ----
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
@@ -107,23 +114,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return;
         }
 
-        
-
         const userRef = doc(db, 'users', firebaseUser.uid);
         let snap = await getDoc(userRef);
 
-        // ⚙️ ensureUserDoc : si le doc Firestore n'existe pas → on le crée
+        // ⚙️ ensureUserDoc : si le doc Firestore n'existe pas → on le crée (avec les données d'inscription)
         if (!snap.exists()) {
+          const pending = pendingSignupRef.current ?? {};
+          pendingSignupRef.current = null;
           await setDoc(
             userRef,
             {
               email: firebaseUser.email ?? null,
-              displayName: firebaseUser.displayName ?? null,
+              displayName: pending.displayName ?? firebaseUser.displayName ?? null,
               role: 'user',
               isAdmin: false,
               isVerified: false,
               isSuspended: false,
               isDeleted: false,
+              isAidant: pending.isAidant ?? false,
+              experience: pending.experience ?? null,
+              tarifHeure: pending.tarifHeure ?? null,
+              description: pending.description ?? null,
+              secteur: pending.secteur ?? null,
+              genre: pending.genre ?? null,
               createdAt: serverTimestamp(),
             },
             { merge: true }
@@ -244,6 +257,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setError(null);
       setLoading(true);
       try {
+        // Le document Firestore sera créé par ensureUserDoc (onAuthStateChanged) avec ces données.
+        pendingSignupRef.current = additionalData;
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         const fbUser = cred.user;
 
@@ -252,32 +267,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           await updateProfile(fbUser, { displayName: additionalData.displayName || '' });
         }
 
-        // Créer / merger le document Firestore
-        const userRef = doc(db, 'users', fbUser.uid);
-        await setDoc(
-          userRef,
-          {
-            email: fbUser.email ?? null,
-            displayName: additionalData.displayName ?? fbUser.displayName ?? null,
-            role: 'user',
-            isVerified: false,
-            isSuspended: false,
-            isDeleted: false,
-            createdAt: serverTimestamp(),
-
-            // champs aidant si fournis
-            experience: additionalData.experience ?? null,
-            tarifHeure: additionalData.tarifHeure ?? null,
-            description: additionalData.description ?? null,
-            isAidant: additionalData.isAidant ?? false,
-            secteur: additionalData.secteur ?? null,
-            genre: additionalData.genre ?? null,
-          },
-          { merge: true }
-        );
-
         return fbUser;
       } catch (e: any) {
+        pendingSignupRef.current = null;
         setError(e?.message ?? 'Erreur inscription');
         throw e;
       } finally {

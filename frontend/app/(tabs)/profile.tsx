@@ -5,6 +5,7 @@ import {
   Alert, TextInput, ActivityIndicator, Modal, FlatList
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { Colors } from '@/constants/Colors';
 import { useTheme } from '@/hooks/useTheme';
@@ -146,7 +147,12 @@ export default function ProfileScreen() {
         isAidant: true,
       };
       await updateUserProfile(profileData);
-      toast.success('Votre profil aidant a été mis à jour.', 'Profil enregistré');
+      toast.success(
+        user?.isVerified
+          ? 'Votre profil aidant a été mis à jour.'
+          : 'Profil enregistré. Il sera visible dans les recherches dès validation par notre équipe.',
+        'Profil enregistré'
+      );
     } catch (error: any) {
       toast.error(ErrorService.handleFirebaseError(error), 'Enregistrement impossible');
     } finally {
@@ -154,7 +160,37 @@ export default function ProfileScreen() {
     }
   };
 
+  const [isSwitchingRole, setIsSwitchingRole] = useState(false);
+
+  const changerRole = (versAidant: boolean) => {
+    Alert.alert(
+      versAidant ? 'Devenir aidant(e)' : 'Ne plus proposer mes services',
+      versAidant
+        ? 'Vous pourrez remplir votre profil aidant. Il sera visible dans les recherches après validation par notre équipe.'
+        : 'Votre profil ne sera plus proposé aux familles. Vous pourrez le réactiver à tout moment.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: versAidant ? 'Continuer' : 'Confirmer',
+          style: versAidant ? 'default' : 'destructive',
+          onPress: async () => {
+            setIsSwitchingRole(true);
+            try {
+              await updateUserProfile({ isAidant: versAidant });
+              toast.success(versAidant ? 'Complétez votre profil aidant ci-dessous.' : 'Votre profil aidant est désactivé.');
+            } catch (error: any) {
+              toast.error(ErrorService.handleFirebaseError(error));
+            } finally {
+              setIsSwitchingRole(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const initial = user?.email?.charAt(0)?.toUpperCase() || '?';
+  const isAidant = !!user?.isAidant;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -170,8 +206,29 @@ export default function ProfileScreen() {
           <View style={styles.userInfo}>
             <Text style={[styles.userName, { color: theme.text }]}>{user?.displayName || 'Utilisateur'}</Text>
             <Text style={[styles.userEmail, { color: theme.textSecondary }]}>{user?.email}</Text>
+            <View style={[styles.roleBadge, { backgroundColor: theme.surfaceSecondary }]}>
+              <Ionicons name={isAidant ? 'hand-left' : 'search'} size={12} color={Colors.light.primary} />
+              <Text style={[styles.roleBadgeText, { color: theme.textSecondary }]}>{isAidant ? 'Aidant(e)' : 'Famille / client'}</Text>
+            </View>
           </View>
         </View>
+
+        {/* Statut de validation (aidants) */}
+        {isAidant ? (
+          user?.isVerified ? (
+            <View style={[styles.banner, styles.bannerOk]}>
+              <Ionicons name="shield-checkmark" size={22} color="#1e7e34" />
+              <Text style={[styles.bannerText, { color: '#1e7e34' }]}>Profil vérifié : vous êtes visible dans les recherches.</Text>
+            </View>
+          ) : (
+            <View style={[styles.banner, styles.bannerPending]}>
+              <Ionicons name="time-outline" size={22} color="#8a5a00" />
+              <Text style={[styles.bannerText, { color: '#8a5a00' }]}>
+                En attente de validation par notre équipe. Complétez votre profil ci-dessous : vous serez visible dès qu&apos;il sera vérifié.
+              </Text>
+            </View>
+          )
+        ) : null}
 
         {/* 🛠️ Bouton Admin visible uniquement si admin */}
         {isAdmin && (
@@ -180,9 +237,25 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         )}
 
+        {!isAidant ? (
+          <View style={[styles.aidantSection, { backgroundColor: theme.surface }]}>
+            <Text style={styles.sectionTitle}>Vous proposez des services d&apos;aide ?</Text>
+            <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+              Activez votre profil aidant pour recevoir des demandes des familles de votre secteur.
+            </Text>
+            <TouchableOpacity
+              style={[styles.saveButton, isSwitchingRole && styles.buttonDisabled]}
+              onPress={() => changerRole(true)}
+              disabled={isSwitchingRole}
+              accessibilityRole="button"
+            >
+              {isSwitchingRole ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.saveButtonText}>Devenir aidant(e)</Text>}
+            </TouchableOpacity>
+          </View>
+        ) : (
         <View style={[styles.aidantSection, { backgroundColor: theme.surface }]}>
-          <Text style={styles.sectionTitle}>Mon Profil Aidant</Text>
-          <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>Remplissez ces informations pour apparaître dans les recherches.</Text>
+          <Text style={styles.sectionTitle}>Mon profil aidant</Text>
+          <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>Ces informations sont présentées aux familles dans les résultats de recherche.</Text>
 
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: theme.text }]}>Je suis *</Text>
@@ -241,7 +314,17 @@ export default function ProfileScreen() {
           >
             {isSaving ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.saveButtonText}>Sauvegarder</Text>}
           </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => changerRole(false)}
+            disabled={isSwitchingRole}
+            style={styles.linkButton}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.linkButtonText, { color: theme.textSecondary }]}>Je ne propose plus mes services</Text>
+          </TouchableOpacity>
         </View>
+        )}
 
         <View style={styles.actionsContainer}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -387,6 +470,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   deleteAccountButtonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
+
+  roleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginTop: 6,
+  },
+  roleBadgeText: { fontSize: 12, fontWeight: '600' },
+  banner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginHorizontal: 15,
+    marginBottom: 15,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  bannerOk: { backgroundColor: '#e6f4ea', borderColor: '#b7e1c1' },
+  bannerPending: { backgroundColor: '#fff4e0', borderColor: '#f5d9a8' },
+  bannerText: { flex: 1, fontSize: 14, lineHeight: 20, fontWeight: '500' },
+  linkButton: { alignItems: 'center', paddingVertical: 12, marginTop: 6, minHeight: 44, justifyContent: 'center' },
+  linkButtonText: { fontSize: 14, textDecorationLine: 'underline' },
 
   footer: { alignItems: 'center', padding: 20 },
   footerText: { fontSize: 12, color: '#bdc3c7' },

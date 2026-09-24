@@ -17,6 +17,15 @@
       "fields": [
         { "fieldPath": "isAidant", "order": "ASCENDING" },
         { "fieldPath": "isVerified", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isAidant", "order": "ASCENDING" },
+        { "fieldPath": "isVerified", "order": "ASCENDING" },
         { "fieldPath": "isSuspended", "order": "ASCENDING" },
         { "fieldPath": "isDeleted", "order": "ASCENDING" },
         { "fieldPath": "genre", "order": "ASCENDING" }
