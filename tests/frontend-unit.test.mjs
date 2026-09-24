@@ -67,3 +67,12 @@ test('profile filters match secteur and preference locally', () => {
   assert.equal(profileMatchesPreference(profile, 'femme'), true);
   assert.equal(profileMatchesPreference(profile, 'Indifferent'), true);
 });
+
+test('profile filters ignore accents (valeurs envoyées par l\'app)', () => {
+  const profile = { secteur: 'Soins legers et assistance', genre: 'Homme' };
+
+  // L'écran de recherche envoie « Indifférent » avec accent : tout le monde doit passer.
+  assert.equal(profileMatchesPreference(profile, 'Indifférent'), true);
+  assert.equal(profileMatchesPreference(profile, 'Femme'), false);
+  assert.equal(profileMatchesSecteur(profile, 'Soins légers et assistance'), true);
+});

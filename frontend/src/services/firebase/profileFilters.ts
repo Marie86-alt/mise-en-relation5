@@ -4,9 +4,15 @@ export interface FilterableProfile {
   genre?: string | null;
 }
 
+// Minuscules, espaces normalisés et accents retirés : « Indifférent » → « indifferent »
 export const normalizeProfileString = (str?: string | null) => {
   if (!str) return '';
-  return String(str).toLowerCase().trim().replace(/\s+/g, ' ');
+  return String(str)
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ');
 };
 
 export const profileMatchesSecteur = (

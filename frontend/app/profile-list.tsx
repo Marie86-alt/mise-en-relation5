@@ -5,9 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  Image,
   SafeAreaView,
-  
   ScrollView
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -119,11 +117,6 @@ export default function ProfileListScreen() {
             </Text>
           </View>
           <Text style={styles.profileTarif}>{item.tarifHeure || 'N/A'}€/h</Text>
-          {item.isActive !== false && (
-            <View style={[styles.statusBadge, styles.disponible]}>
-              <Text style={[styles.statusText, styles.disponibleText]}>Disponible</Text>
-            </View>
-          )}
         </View>
       </View>
       <Text style={styles.profileDescription} numberOfLines={2}>{item.description}</Text>
@@ -260,12 +253,6 @@ const styles = StyleSheet.create({
   emptyStar: { color: '#dee2e6', fontSize: 14 },
   ratingText: { fontSize: 12, color: '#6c757d', marginTop: 2 },
   profileTarif: { fontSize: 16, fontWeight: 'bold', color: Colors.light.success, marginBottom: 5 },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20 },
-  disponible: { backgroundColor: '#d4edda' },
-  indisponible: { backgroundColor: '#f8d7da' },
-  statusText: { fontSize: 12, fontWeight: '500' },
-  disponibleText: { color: '#155724' },
-  indisponibleText: { color: '#721c24' },
   profileDescription: { fontSize: 14, color: '#6c757d', lineHeight: 20 },
   emptyContainer: { alignItems: 'center', marginTop: 50, paddingHorizontal: 20 },
   emptyTitle: { fontSize: 20, fontWeight: 'bold', color: '#6c757d', marginBottom: 10 },

@@ -261,12 +261,11 @@ export default function ProfileDetailScreen() {
                 {profile.averageRating ? `${profile.averageRating}/5 (${profile.totalReviews || 0} avis)` : 'Nouveau profil'}
               </Text>
             </View>
-            <View style={styles.statusContainer}>
-              <View style={[styles.statusBadge, profile.isActive ? styles.disponible : styles.indisponible]}>
-                <Text style={[styles.statusText, profile.isActive ? styles.disponibleText : styles.indisponibleText]}>Disponible</Text>
+            {profile.isVerified ? (
+              <View style={styles.statusContainer}>
+                <View style={styles.verifiedBadge}><Text style={styles.verifiedText}>✓ Profil vérifié</Text></View>
               </View>
-              {profile.isVerified && <View style={styles.verifiedBadge}><Text style={styles.verifiedText}>✓ Vérifié</Text></View>}
-            </View>
+            ) : null}
           </View>
         </View>
 
@@ -365,14 +364,8 @@ const styles = StyleSheet.create({
   emptyStar: { color: '#dee2e6', fontSize: 16 },
   ratingText: { fontSize: 14, color: '#6c757d' },
   statusContainer: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 5 },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
-  disponible: { backgroundColor: '#d4edda' },
-  indisponible: { backgroundColor: '#f8d7da' },
-  statusText: { fontSize: 12, fontWeight: '500' },
-  disponibleText: { color: '#155724' },
-  indisponibleText: { color: '#721c24' },
-  verifiedBadge: { backgroundColor: '#cce5ff', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 15 },
-  verifiedText: { fontSize: 12, color: '#0066cc', fontWeight: '500' },
+  verifiedBadge: { backgroundColor: '#e6f4ea', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
+  verifiedText: { fontSize: 12, color: '#1e7e34', fontWeight: '600' },
   section: { backgroundColor: '#ffffff', padding: 20, marginBottom: 10, borderTopWidth: 1, borderTopColor: '#f0f0f0' },
   sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#2c3e50', marginBottom: 15 },
   description: { fontSize: 16, color: '#495057', lineHeight: 24 },
