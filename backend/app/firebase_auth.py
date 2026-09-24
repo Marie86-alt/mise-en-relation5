@@ -89,9 +89,28 @@ def service_account_diagnostic() -> dict:
 
     stripped = raw.strip()
     info["wrappedInQuotes"] = len(stripped) >= 2 and stripped[0] == stripped[-1] and stripped[0] in ('"', "'")
+    # Indices de structure (aucune valeur) : aident à comprendre comment le JSON a été déformé
+    info["structure"] = {
+        "startsWith": stripped[:2],
+        "realNewlines": stripped.count(chr(10)),
+        "backslashN": stripped.count(BACKSLASH + "n"),
+        "escapedQuotes": stripped.count(BACKSLASH + '"'),
+        "doubleBackslashes": stripped.count(BACKSLASH + BACKSLASH),
+    }
 
     data, note = parse_service_account_json(raw)
     if data is None:
+        # Message du décodeur pour la valeur brute et pour la valeur sans guillemets
+        errors = {}
+        for label, candidate in (("raw", stripped), ("stripped", stripped[1:-1] if info["wrappedInQuotes"] else None)):
+            if candidate is None:
+                continue
+            try:
+                json.loads(candidate)
+                errors[label] = "ok (mais pas un objet)"
+            except (ValueError, TypeError) as exc:
+                errors[label] = str(exc)[:120]
+        info["jsonErrors"] = errors
         return info
 
     info["jsonValid"] = True
