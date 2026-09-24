@@ -2,17 +2,26 @@
   "expo": {
     "name": "A La Case Nout Gramoun",
     "slug": "mise-en-relation-app",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
     "scheme": "miseenrelation",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.miseenrelation.app"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.miseenrelation.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Cette application n'utilise pas la caméra. Cette permission est requise par une bibliothèque tierce.",
+        "NSPhotoLibraryUsageDescription": "Cette application n'accède pas à vos photos. Cette permission est requise par une bibliothèque tierce.",
+        "NSMicrophoneUsageDescription": "Cette application n'utilise pas le microphone. Cette permission est requise par une bibliothèque tierce.",
+        "NSLocationWhenInUseUsageDescription": "Cette application n'utilise pas votre localisation. Cette permission est requise par une bibliothèque tierce."
+      },
+      "deploymentTarget": "15.1"
     },
     "android": {
+      "versionCode": 6,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -29,7 +38,7 @@
         "expo-build-properties",
         {
           "ios": {
-            "useFrameworks": "static"
+            "deploymentTarget": "15.1"
           }
         }
       ],

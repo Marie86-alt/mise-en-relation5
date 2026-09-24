@@ -3,13 +3,6 @@ import { StyleSheet } from 'react-native';
 import { Colors } from '@/constants/Colors';
 
 // ==================== NIVEAU 3: ANIMATIONS & TRANSITIONS ====================
-// Configuration des animations et transitions fluides
-const animations = {
-    fadeIn: { duration: 300, useNativeDriver: true },
-    slideIn: { duration: 350, useNativeDriver: true },
-    scaleIn: { duration: 250, useNativeDriver: true },
-    bounce: { duration: 500, useNativeDriver: true },
-};
 
 // Constantes pour les ombres sophistiquées (box-shadow)
 const shadows = {

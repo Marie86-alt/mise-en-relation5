@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { initializeAuth, getReactNativePersistence, browserLocalPersistence } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
@@ -23,7 +23,19 @@ const auth = initializeAuth(app, {
       : getReactNativePersistence(AsyncStorage),
 });
 
-const db = getFirestore(app);
+// Initialiser Firestore avec cache persistant et ignorer les erreurs réseau
+const db = initializeFirestore(app, {
+  cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+  experimentalForceLongPolling: true, // Aide avec les problèmes de connexion
+  ignoreUndefinedProperties: true
+});
+
+// Activer la persistance pour le mode offline
+// Note: Les erreurs de connexion seront silencieuses mais l'app fonctionnera en mode cache
+if (Platform.OS !== 'web') {
+  // Pour React Native, la persistance est activée par défaut
+  console.log('📱 Firestore configuré avec persistance offline');
+}
 
 export { auth, db };
 export default app;

@@ -98,7 +98,7 @@ export default function ProfileDetailScreen() {
       setReviews(realReviews);
       
     } catch (error) {
-      console.error('❌ Erreur chargement avis:', error);
+      if (__DEV__) console.log('⚠️ Erreur chargement avis:', error);
       // En cas d'erreur, utiliser des avis de fallback
       const fallbackReviews: Review[] = [
         { id: 'fallback_1', rating: 5, comment: 'Très professionnelle et attentionnée.', clientName: 'Client anonyme' },

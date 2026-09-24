@@ -1,9 +1,11 @@
 // frontend/app/(tabs)/admin.tsx
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { View, Text, ActivityIndicator, Alert } from 'react-native';
+import {
+  View, Text, ActivityIndicator, TouchableOpacity,
+  StyleSheet, FlatList, Alert, TextInput, Modal, ScrollView
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { useAuth } from '@/src/contexts/AuthContext';
 import { Colors } from '@/constants/Colors';
 import { useTheme } from '@/hooks/useTheme';
@@ -79,7 +81,7 @@ export default function AdminScreen() {
     const unsub = onSnapshot(
       qPending,
       (snap) => setPending(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))),
-      (err) => console.error('listen pending', err)
+      (err) => console.log('⚠️ Erreur listener pending:', err)
     );
 
     return unsub;
@@ -100,7 +102,7 @@ export default function AdminScreen() {
         setUsers(activeUsers);
         console.log(`📊 Utilisateurs actifs: ${activeUsers.length}`);
       },
-      (err) => console.error('listen users', err)
+      (err) => console.log('⚠️ Erreur listener users:', err)
     );
 
     return unsub;
@@ -125,7 +127,7 @@ export default function AdminScreen() {
           )
         );
       },
-      (err) => console.error('listen conversations', err)
+      (err) => console.log('⚠️ Erreur listener conversations:', err)
     );
 
     return () => unsub();
@@ -233,7 +235,7 @@ export default function AdminScreen() {
 
               Alert.alert('✅ Utilisateur supprimé', "L'utilisateur a été désactivé et ne peut plus se connecter.");
             } catch (error: any) {
-              console.error('❌ Erreur complète:', error);
+              console.log('❌ Erreur suppression utilisateur:', error?.message || error);
               Alert.alert('Erreur', `Impossible de supprimer cet utilisateur: ${error?.message ?? 'Erreur inconnue'}`);
             }
           },
@@ -319,7 +321,7 @@ export default function AdminScreen() {
         lastUpdate: data.lastUpdate,
       });
     } catch (error) {
-      console.error('❌ Erreur stats réelles:', error);
+      console.log('❌ Erreur chargement stats:', error);
       Alert.alert('Erreur', 'Impossible de charger les statistiques');
 
       // fallback basique depuis le state users/conversations
