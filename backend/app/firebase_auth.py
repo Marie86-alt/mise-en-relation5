@@ -4,7 +4,7 @@ Firebase Admin helpers: authentification des requêtes et accès Firestore côt�
 
 import json
 import logging
-from typing import Optional
+from typing import Any, Dict, Optional, Tuple
 
 import firebase_admin
 from fastapi import HTTPException
@@ -15,28 +15,68 @@ from .config import settings
 
 logger = logging.getLogger(__name__)
 
+BACKSLASH = chr(92)
+
 # Dernière erreur d'initialisation (type + message court), pour le diagnostic /health/integrations
 last_init_error: Optional[str] = None
 
 
+def _remember_error(stage: str, exc: Exception) -> None:
+    global last_init_error
+    last_init_error = f"{stage}: {type(exc).__name__}: {str(exc)[:160]}"
+
+
+def parse_service_account_json(raw: Optional[str]) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """
+    Décode le JSON du compte de service en tolérant les collages courants dans une variable
+    d'environnement : guillemets autour du JSON, guillemets internes échappés, JSON doublement
+    encodé. Retourne (données, note) ; `note` indique la correction appliquée, None si aucune.
+    """
+    if not raw:
+        return None, None
+    text = raw.strip()
+    candidates = [(text, None)]
+    if len(text) >= 2 and text[0] == text[-1] and text[0] in ('"', "'"):
+        inner = text[1:-1]
+        candidates.append((inner, "stripped_quotes"))
+        candidates.append((inner.replace(BACKSLASH + '"', '"'), "unescaped_quotes"))
+
+    for candidate, note in candidates:
+        try:
+            data = json.loads(candidate)
+        except (ValueError, TypeError):
+            continue
+        if isinstance(data, str):  # JSON doublement encodé : la valeur est elle-même du JSON
+            try:
+                data = json.loads(data)
+                note = note or "double_encoded"
+            except (ValueError, TypeError):
+                continue
+        if isinstance(data, dict):
+            return data, note
+    return None, None
+
+
+def _service_account_raw() -> Tuple[Optional[str], Optional[str]]:
+    if settings.SERVICE_ACCOUNT_PATH.exists():
+        try:
+            return settings.SERVICE_ACCOUNT_PATH.read_text(encoding="utf-8"), "file"
+        except OSError:
+            return None, "file"
+    if settings.FIREBASE_SERVICE_ACCOUNT_JSON:
+        return settings.FIREBASE_SERVICE_ACCOUNT_JSON, "env"
+    return None, None
+
+
 def service_account_diagnostic() -> dict:
     """État du compte de service sans exposer de valeur : source, JSON lisible, champs clés, projet."""
-    source = None
-    raw = None
-    if settings.SERVICE_ACCOUNT_PATH.exists():
-        source = "file"
-        try:
-            raw = settings.SERVICE_ACCOUNT_PATH.read_text(encoding="utf-8")
-        except OSError:
-            raw = None
-    elif settings.FIREBASE_SERVICE_ACCOUNT_JSON:
-        source = "env"
-        raw = settings.FIREBASE_SERVICE_ACCOUNT_JSON
-
-    info = {
+    raw, source = _service_account_raw()
+    info: Dict[str, Any] = {
         "source": source,
         "length": len(raw) if raw else 0,
         "jsonValid": False,
+        "jsonFixApplied": None,
+        "wrappedInQuotes": False,
         "hasPrivateKey": False,
         "privateKeyLooksValid": False,
         "clientEmailDomain": None,
@@ -46,19 +86,19 @@ def service_account_diagnostic() -> dict:
     }
     if not raw:
         return info
-    try:
-        data = json.loads(raw)
-    except (ValueError, TypeError):
-        # Collage avec guillemets autour ou caractères d'échappement doublés ?
-        stripped = raw.strip()
-        info["wrappedInQuotes"] = stripped[:1] in ("'", '"') and stripped[-1:] == stripped[:1]
+
+    stripped = raw.strip()
+    info["wrappedInQuotes"] = len(stripped) >= 2 and stripped[0] == stripped[-1] and stripped[0] in ('"', "'")
+
+    data, note = parse_service_account_json(raw)
+    if data is None:
         return info
-    if not isinstance(data, dict):
-        return info
+
     info["jsonValid"] = True
+    info["jsonFixApplied"] = note
     key = data.get("private_key") or ""
     info["hasPrivateKey"] = bool(key)
-    info["privateKeyLooksValid"] = key.startswith("-----BEGIN PRIVATE KEY-----") and "\n" in key
+    info["privateKeyLooksValid"] = key.startswith("-----BEGIN PRIVATE KEY-----") and chr(10) in key
     email = data.get("client_email") or ""
     info["clientEmailDomain"] = email.split("@", 1)[1] if "@" in email else None
     info["projectId"] = data.get("project_id")
@@ -70,20 +110,22 @@ def service_account_diagnostic() -> dict:
 
 def _build_credentials() -> Optional[credentials.Base]:
     """Compte de service : fichier local, sinon JSON en variable d'environnement."""
-    if settings.SERVICE_ACCOUNT_PATH.exists():
-        return credentials.Certificate(str(settings.SERVICE_ACCOUNT_PATH))
-    if settings.FIREBASE_SERVICE_ACCOUNT_JSON:
-        try:
-            return credentials.Certificate(json.loads(settings.FIREBASE_SERVICE_ACCOUNT_JSON))
-        except Exception as exc:  # noqa: BLE001 - JSON illisible, clé invalide…
-            _remember_error("credentials", exc)
-            logger.exception("FIREBASE_SERVICE_ACCOUNT_JSON illisible")
-    return None
-
-
-def _remember_error(stage: str, exc: Exception) -> None:
-    global last_init_error
-    last_init_error = f"{stage}: {type(exc).__name__}: {str(exc)[:160]}"
+    raw, source = _service_account_raw()
+    if not raw:
+        return None
+    data, note = parse_service_account_json(raw)
+    if data is None:
+        _remember_error("credentials", ValueError("JSON du compte de service illisible"))
+        logger.error("Compte de service (%s) illisible : JSON invalide", source)
+        return None
+    if note:
+        logger.warning("Compte de service (%s) : correction de collage appliquée (%s)", source, note)
+    try:
+        return credentials.Certificate(data)
+    except Exception as exc:  # noqa: BLE001 - clé invalide, champs manquants…
+        _remember_error("credentials", exc)
+        logger.exception("Compte de service (%s) invalide", source)
+        return None
 
 
 def _ensure_firebase_app() -> bool:
