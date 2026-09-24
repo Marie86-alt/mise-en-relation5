@@ -8,7 +8,14 @@ import { Colors } from '@/constants/Colors';
 import { DocumentData, Timestamp } from 'firebase/firestore';
 import { useTheme } from '@/hooks/useTheme';
 
-type StatutServiceType = 'conversation' | 'service_confirme' | 'en_cours' | 'termine' | 'evaluation' | 'acompte_paye';
+type StatutServiceType =
+  | 'conversation'
+  | 'service_confirme'
+  | 'acompte_en_cours'
+  | 'acompte_paye'
+  | 'en_cours'
+  | 'evaluation'
+  | 'termine';
 
 interface StatutInfo {
   label: string;
@@ -18,6 +25,7 @@ interface StatutInfo {
 
 const STATUTS: Record<StatutServiceType, StatutInfo> = {
   conversation: { label: 'En discussion', couleur: Colors.light.primary, icon: '💬' },
+  acompte_en_cours: { label: 'Acompte à finaliser', couleur: '#f39c12', icon: '💳' },
   service_confirme: { label: 'Confirmé', couleur: '#3498db', icon: '🗓️' },
   acompte_paye: { label: 'Confirmé', couleur: '#3498db', icon: '🗓️' },
   en_cours: { label: 'En cours', couleur: '#27ae60', icon: '🔄' },
@@ -28,6 +36,8 @@ const STATUTS: Record<StatutServiceType, StatutInfo> = {
 interface Conversation extends DocumentData {
   id: string;
   participants: string[];
+  clientId?: string;
+  aidantId?: string;
   participantDetails: { [uid: string]: { displayName?: string } };
   lastMessage?: { texte: string; createdAt?: Timestamp };
   secteur: string;
@@ -113,7 +123,7 @@ export default function MesServicesScreen() {
 
   const sections = useMemo(() => {
     return {
-      '💬 En discussion': conversations.filter((c) => c.status === 'conversation'),
+      '💬 En discussion': conversations.filter((c) => c.status === 'conversation' || c.status === 'acompte_en_cours'),
       '🗓️ Services à venir': conversations.filter((c) => ['service_confirme', 'acompte_paye', 'en_cours'].includes(c.status)),
       '✅ Services terminés': conversations.filter((c) => c.status === 'termine' || c.status === 'evaluation'),
     };
@@ -123,6 +133,9 @@ export default function MesServicesScreen() {
     if (!user) return;
     const otherUserId = conv.participants?.find((uid) => uid !== user.uid) || '';
     const otherUserName = otherUserId ? conv.participantDetails?.[otherUserId]?.displayName || 'Interlocuteur' : 'Interlocuteur';
+    // Rôle connu si la conversation a été initiée avec les rôles ; sinon l'écran se rabat sur
+    // le comportement historique (l'utilisateur est traité comme client).
+    const role = conv.clientId ? (conv.clientId === user.uid ? 'client' : 'aidant') : '';
     router.push({
       pathname: '/conversation',
       params: {
@@ -132,6 +145,7 @@ export default function MesServicesScreen() {
         jour: conv.jour || '',
         heureDebut: conv.heureDebut || '',
         heureFin: conv.heureFin || '',
+        role,
       },
     });
   };

@@ -1,7 +1,7 @@
 // src/services/firebase/chatService.ts
 import {
   collection, addDoc, query, orderBy, onSnapshot, serverTimestamp,
-  doc, setDoc, where, updateDoc,
+  doc, setDoc, getDoc, where, updateDoc,
   DocumentData
 } from 'firebase/firestore';
 import { db } from '../../../firebase.config';
@@ -25,7 +25,16 @@ export interface Message {
   id: string;
   texte: string;
   expediteurId: string;
-  timestamp: any;
+  /** Écrit par sendMessage (serverTimestamp) */
+  createdAt?: any;
+  /** Ancien nom de champ, conservé pour les messages historiques */
+  timestamp?: any;
+}
+
+/** Rôles des deux participants, fixés par le client qui initie la conversation. */
+export interface ConversationRoles {
+  clientId: string;
+  aidantId: string;
 }
 
 type MessagesCallback = (messages: Message[]) => void;
@@ -41,21 +50,33 @@ export const chatService = {
 ensureConversationExists: async (
   conversationId: string,
   participants: string[],
-  participantDetails: { [uid: string]: { displayName?: string | null } }
+  participantDetails: { [uid: string]: { displayName?: string | null } },
+  roles?: ConversationRoles
 ): Promise<void> => {
   const convRef = doc(db, 'conversations', conversationId);
   try {
     // ❌ pas de getDoc() ici (read interdit si le doc n’existe pas encore)
+    // ⚠️ merge: true → `status` et `createdAt` ne sont PAS réécrits si le doc existe
+    //    (voir ci-dessous : on ne les fournit qu'à la création via un 2e setDoc conditionnel)
     await setDoc(
       convRef,
       {
         participants,
         participantDetails,
-        status: 'conversation' as StatutServiceType,
-        createdAt: serverTimestamp(),
+        ...(roles ?? {}),
       },
       { merge: true }
     );
+    // Statut initial uniquement s'il est absent (ne jamais écraser un parcours en cours).
+    // La lecture est autorisée ici : le doc existe désormais et l'utilisateur en est participant.
+    const snap = await getDoc(convRef);
+    if (snap.exists() && !snap.data()?.status) {
+      await setDoc(
+        convRef,
+        { status: 'conversation' as StatutServiceType, createdAt: serverTimestamp() },
+        { merge: true }
+      );
+    }
   } catch (error) {
     console.error('❌ ensureConversationExists setDoc failed:', error);
     throw error;

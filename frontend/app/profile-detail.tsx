@@ -201,6 +201,8 @@ export default function ProfileDetailScreen() {
                 jour: jour as string,
                 heureDebut: heureDebut as string,
                 heureFin: heureFin as string,
+                // C'est le client qui initie : fixe les rôles dans la conversation
+                role: 'client',
               }
             });
           }
